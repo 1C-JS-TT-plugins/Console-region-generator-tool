@@ -1,0 +1,11 @@
+{
+  "id":"$rcsr",
+  "version":1.5,
+  "title":"Region creation stage revamp v1.5",
+  "text":"",
+  "author":"/",
+  //"thumbnail":"Something.png",
+  "category":false,
+  "url":"https://github.com/TA874/Region-creation-stage-revamp/blob/main/Region%20creation%20stage%20revamp.plugin",
+  "multiplayer":true
+}
