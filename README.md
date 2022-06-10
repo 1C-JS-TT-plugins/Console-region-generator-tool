@@ -10,6 +10,6 @@ This plugin calls TheoTown.execute("cr:{}") to generate a region (you can do so 
 
 Report bugs here: https://github.com/TA874/Region-creation-stage-revamp/issues
 
-Also available for free download on forum: https://forum.theotown.com/viewtopic.php?f=73&t=16224
+You can also download from here: https://forum.theotown.com/viewtopic.php?f=73&t=16224, or from the plugin store.
 
 *Custom buttons shown in thumbnail are not included. FPS counter not included either.
