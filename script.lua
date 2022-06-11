@@ -191,8 +191,7 @@ local function deleteAllMaps()
 end
 local addTextField
 local selectedMap
-local openMenu
-openMenu=function(p,v)
+local function openMenu(p,v)
 	do local e=GUI.get("mapMenu") if type(e)=="table" then e:delete() end end
 	local del
 	pdata.size=v[3]
@@ -257,7 +256,7 @@ openMenu=function(p,v)
 						onClick=function() for i,vv in pairs(data.maps) do if vv==v then table.remove(data.maps,i) del=true break end end end
 					}
 					:getParent():getParent()
-					local h=0 for _,v in pairs(l:getFirstPart():getObjects()) do h=h+v:getH() end l:setH(h) self:setH(h+4)
+					local h=0 for _,v in pairs(l:getFirstPart():getObjects()) do h=h+v:getH() end l:setH(h) self:setH(h+6)
 					self:setAXY(p:getAX()+(p:getW()/2)-(self:getW()/2),p:getAY()-self:getH())
 				end,
 				onUpdate=function(self)
@@ -373,7 +372,7 @@ local function openStage()
 																ii=ii+1
 																_,_,fxx,fyy=self:getTouchPoint()
 																local x,y=self:getTouchPoint()
-																a=x==fxx and y==fyy
+																a=x>=fxx-1 and x<=fxx+1 and y>=fyy-1 and y<=fyy+1
 																if not (xx and yy) then xx=x-self:getAX() yy=y-self:getAY() end
 																self:setAXY(x-xx,y-yy)
 															else xx,yy=nil,nil ii=0 end
@@ -415,7 +414,7 @@ local function openStage()
 															Drawing.setColor(r,g,b)
 															Drawing.setAlpha(a)
 														end,
-														onClick=function(self) if a then openMenu(self,v) end end,
+														onClick=function(self) if a or (ii<=3) then openMenu(self,v) end end,
 													}
 												end
 											end
