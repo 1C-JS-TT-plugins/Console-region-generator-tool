@@ -191,11 +191,14 @@ local function deleteAllMaps()
 end
 local addTextField
 local selectedMap
-local function openMenu(p,v)
+local openMenu
+openMenu=function(p,v)
+	do local e=GUI.get("mapMenu") if type(e)=="table" then e:delete() end end
 	local del
-	selectedMap=p
 	pdata.size=v[3]
+	selectedMap=p
 	return GUI.getRoot():addCanvas {
+		id="mapMenu",
 		onInit=function(self)
 			self:setAXY(0,0)
 			self:setW(self:getW()+p2+p4)
@@ -359,6 +362,7 @@ local function openStage()
 												for _,v in pairs(self:getObjects()) do v:delete() end
 												for _,v in pairs(data.maps) do
 													local ii,xx,yy,fxx,fyy=0
+													local a=true
 													self:addCanvas {
 														onUpdate=function(self)
 															local pw,ph=self:getPa():getWH()
@@ -368,7 +372,8 @@ local function openStage()
 																self:setChildIndex(self:getPa():countChildren())
 																ii=ii+1
 																_,_,fxx,fyy=self:getTouchPoint()
-																local x,y,fx,fy=self:getTouchPoint()
+																local x,y=self:getTouchPoint()
+																a=x==fxx and y==fyy
 																if not (xx and yy) then xx=x-self:getAX() yy=y-self:getAY() end
 																self:setAXY(x-xx,y-yy)
 															else xx,yy=nil,nil ii=0 end
@@ -381,6 +386,7 @@ local function openStage()
 																v[2]=math.floor(((size-1)*(1-yyy))+0.5)-(v[3]-1)
 															end
 															if true then self:setXY((pw/size)*(v[1]),ph-((ph/size)*(v[2]+v[3]))) end
+															--if ii==1 then fxx,fyy=self:getXY() end
 														end,
 														onDraw=function(self,x,y,w,h)
 															local r,g,b=Drawing.getColor()
@@ -409,9 +415,7 @@ local function openStage()
 															Drawing.setColor(r,g,b)
 															Drawing.setAlpha(a)
 														end,
-														onClick=function(self,x,y) if x==fxx and y==fyy then
-															openMenu(self,v)
-														end end
+														onClick=function(self) if a then openMenu(self,v) end end,
 													}
 												end
 											end
