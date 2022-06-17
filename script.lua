@@ -545,6 +545,7 @@ local function openStage()
 														h=198,
 														--title="Tutorial",
 														text=({
+															"Heightmap field is optional.\n"..
 															"Enter the heightmap image file name (ending in .png, .jpeg, etc.). You can find it in <source>/TheoTown folder and not it's subfolders.\n"..
 															"\n"..
 															"<source>:\n"..
