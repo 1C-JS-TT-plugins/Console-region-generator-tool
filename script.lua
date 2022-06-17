@@ -204,7 +204,7 @@ local function openMenu(p,v)
 			self:setH(self:getH()+p3+p5)
 			local l
 			self:addPanel {
-				w=114,h=0,
+				w=134,h=0,
 				onInit=function(self)
 					self:setPadding(2,2,2,2)
 					local size=function() return tonumber(data.size) or 0 end
@@ -212,7 +212,7 @@ local function openMenu(p,v)
 					while s<size() do ss[#ss+1]=s s=s+2 end
 					l=self:addLayout {vertical=true}
 					l:addLayout {h=20}
-					:addLabel {w=20,text="Size:"}
+					:addLabel {w=25,text=Translation.createcity_mapsize}
 					:getParent():addSlider {
 						h=20,minValue=1,w=-20,
 						maxValue=tonumber(data.size) and (tonumber(data.size) or 0)+0.5 or 0,
@@ -231,7 +231,7 @@ local function openMenu(p,v)
 					}
 					l:addButton {
 						h=20,icon=Icon.REGION_SPLIT,
-						text="Split",
+						text=Translation.createregion_split,
 						onClick=function()
 							local os=v[3]
 							v[3]=os/2
@@ -239,20 +239,18 @@ local function openMenu(p,v)
 								local s=0
 								while s<os do s=s+v[3] end
 								local ss=v[3]/os
-								for x=0,os-v[3],v[3] do
-									for y=0,os-v[3],v[3] do if x~=0 or y~=0 then
-										local np=newMap()
-										np[3]=v[3]
-										np[1]=v[1]+x
-										np[2]=v[2]+y
-									end end
-								end
+								for x=0,os-v[3],v[3] do for y=0,os-v[3],v[3] do if x~=0 or y~=0 then
+									local np=newMap()
+									np[3]=v[3]
+									np[1]=v[1]+x
+									np[2]=v[2]+y
+								end end end
 							end)
 						end
 					}
 					:getParent():addButton {
 						h=20,icon=Icon.REMOVE,
-						text="Delete",
+						text=Translation.loadcity_cmddelete,
 						onClick=function() for i,vv in pairs(data.maps) do if vv==v then table.remove(data.maps,i) del=true break end end end
 					}
 					:getParent():getParent()
@@ -273,7 +271,10 @@ end
 local function openStage()
 	local stage
 	pcall(function()
-		for _,v in pairs(GUI.getRoot():getObjects()) do v:delete() end
+		local p=GUI.get("pageControl"):getParent()
+		while tostring(p:getParent())~=tostring(GUI.getRoot()) do p=p:getParent() end
+		p:delete()
+		--for _,v in pairs(GUI.getRoot():getObjects()) do v:delete() end
 		GUI.getRoot():addCanvas {
 			onInit=function(self) self:setXY(-p2,-p3) self:setWH(self:getW()+p2+p4,self:getH()+p3+p5) end,
 			onClick=function(self) Runtime.popStage() Runtime.popStage() end,
@@ -292,7 +293,7 @@ local function openStage()
 			}
 			self:addCanvas {w=2}
 			self:addLabel {
-				text="New region",
+				text=Translation.createregion_title,
 				font=Font.BIG,
 				onInit=function(self) self:setFont(Font.BIG) end,
 				w=-30
@@ -490,7 +491,7 @@ local function openStage()
 										h=30,
 										onInit=function(self)
 											local seed local function setRandomSeed() seed:setText(math.random(0,99999999999)) end
-											self:addLabel {text="Size:",w=70,onUpdate=function(self) self:setW(math.min(self:getPa():getW(),70)) end}
+											self:addLabel {text=Translation.createcity_mapsize,w=70,onUpdate=function(self) self:setW(math.min(self:getPa():getW(),70)) end}
 											addTextField(self, {
 												w=-71,
 												text=data.size,
@@ -518,7 +519,7 @@ local function openStage()
 										h=30,
 										onInit=function(self)
 											local seed local function setRandomSeed() seed:setText(math.random(0,99999999999)) end
-											self:addLabel {text="Seed:",w=70,onUpdate=function(self) self:setW(math.min(self:getPa():getW(),70)) end}
+											self:addLabel {text=Translation.createcity_seed,w=70,onUpdate=function(self) self:setW(math.min(self:getPa():getW(),70)) end}
 											seed=addTextField(self,{
 												w=-102,
 												text=data.seed,
@@ -535,7 +536,42 @@ local function openStage()
 									self:addLayout {
 										h=30,
 										onInit=function(self)
-											self:addLabel {text="Heightmap:",w=70,onUpdate=function(self) self:setW(math.min(self:getPa():getW(),70)) end}
+											self:addCanvas {
+												w=70,
+												onUpdate=function(self) self:setW(math.min(self:getPa():getW(),70)) end,
+												onClick=function(self)
+													local link="https://forum.theotown.com/viewtopic.php?f=35&t=10039"
+													GUI.createDialog {
+														h=198,
+														--title="Tutorial",
+														text=({
+															"Enter the heightmap image file name (ending in .png, .jpeg, etc.). You can find it in <source>/TheoTown folder and not it's subfolders.\n"..
+															"\n"..
+															"<source>:\n"..
+															"Android: /storage/emulated/0/android/data/"..Runtime.getId().."/files\n"..
+															"Windows: C:\\users\\<username>\n"..
+															"Linux/Mac: /home\n"..
+															"\n"..
+															"For more info, visit:"
+														})[1],
+														actions={icon=Icon.COPY,w=30,onClick=function() Runtime.setClipboard(link) end}
+													}
+													.controls:addLabel {text=link,w=-31}
+												end,
+												onDraw=function(self,x,y,w,h)
+													if self:getTouchPoint() or self:isMouseOver() then
+														local r,g,b=Drawing.getColor()
+														local a=Drawing.getAlpha()
+														Drawing.setAlpha(a*0.2)
+														if self:getTouchPoint() then Drawing.setAlpha(a*0.3) end
+														Drawing.setColor(giAutoGetColor())
+														Drawing.drawRect(x,y,w,h)
+														Drawing.setColor(r,g,b)
+														Drawing.setAlpha(a)
+													end
+												end
+											}
+											:addLabel {text="Heightmap: [i]",onUpdate=function(self) self:setXYWH(0,0,self:getPa():getWH()) end}
 											addTextField(self,{
 												w=-102,
 												text=data.bmp,
@@ -551,7 +587,7 @@ local function openStage()
 									self:addLayout {
 										h=30,
 										onInit=function(self)
-											self:addLabel {text="Region name:",w=70,onUpdate=function(self) self:setW(math.min(self:getPa():getW(),70)) end}
+											self:addLabel {text=Translation.createregion_regionname,w=70,onUpdate=function(self) self:setW(math.min(self:getPa():getW(),70)) end}
 											addTextField(self,{
 												w=-102,
 												text=data.name,
@@ -572,17 +608,17 @@ local function openStage()
 										h=30,
 										onInit=function(self)
 											for _,v in pairs {
-												{Icon.TREE,"Trees"},{Icon.DECORATION,"Decos","Decorations"},
-												{Icon.DESERT,"Desert"},{Icon.WINTER,"Snow"},
-												{Icon.HILLS,"Terrain","Hills"},
+												{Icon.TREE,"trees",Translation.createcity_trees},
+												{Icon.DECORATION,"decos",Translation.createcity_decos},
+												{Icon.DESERT,"desert",Translation.createcity_desert},
+												{Icon.WINTER,"snow",Translation.createcity_snow},
+												{Icon.HILLS,"terrain",Translation.createcity_terrain},
 											}
 											do self:addButton {
-												w=30,
-												text=v[3] or v[2],
-												icon=v[1],
+												w=30,text=v[3],icon=v[1],
 												onUpdate=function(self) self:setW(math.min(self:getPa():getW(),self:getW())) end,
-												isPressed=function() return TheoTown.SETTINGS[v[2]:lower()] end,
-												onClick=function() TheoTown.SETTINGS[v[2]:lower()]=not TheoTown.SETTINGS[v[2]:lower()] end,
+												isPressed=function() return TheoTown.SETTINGS[v[2]] end,
+												onClick=function() TheoTown.SETTINGS[v[2]]=not TheoTown.SETTINGS[v[2]] end,
 											} end
 										end,
 										onUpdate=function(self)
