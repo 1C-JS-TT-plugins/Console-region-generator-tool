@@ -1,11 +1,10 @@
 {
   "id":"$rcsr",
-  "version":160,
-  "title":"Region creation stage revamp v1.6",
+  "version":200,
+  "title":"Region creation stage revamp v2.0",
   "text":"",
-  "author":"/",
-  //"thumbnail":"Something.png",
+  "author":"AFP",
   "category":false,
-  "url":"https://github.com/TA874/Region-creation-stage-revamp/blob/main/Region%20creation%20stage%20revamp.plugin",
+  "url":"https://github.com/AFP-TheoTown-plugins/Region-creation-stage-revamp/raw/main/Region%20creation%20stage%20revamp.plugin",
   "multiplayer":true
 }
