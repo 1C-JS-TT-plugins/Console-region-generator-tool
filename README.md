@@ -1,5 +1,5 @@
 # Region-creation-stage-revamp
-How to use (click the image below):
+How to use (click the image below, and don't forget to subscribe to the channel):
 [![TheoTown revamped region creation stage](https://i.ytimg.com/vi_webp/bEsFcV3eU2g/mqdefault.webp)](https://www.youtube.com/watch?v=eqtgTSUP5Qs)
 
 - Add a new map
