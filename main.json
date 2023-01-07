@@ -1,5 +1,5 @@
 [{
 	"id":"$rcsr00",
 	"type":"data",
-	"script":".rcsr.lua"
+	"script":"script.lua"
 }]
