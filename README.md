@@ -7,7 +7,7 @@ How to use (click the image below, and don't forget to subscribe to the channel)
 - Click on a map to change size and to delete it
 - View and copy JSON code and use it to generate a region from the console
 
-This plugin calls TheoTown.execute("cr:{}") to generate a region (you can do so from the console stage), which causes lag (or even crashes on low-end devices) (unless the region is small enough for your hardware to handle), so I have nothing to do about these issues.
+This plugin calls TheoTown.execute("cr:{}") to generate a region (you can do so from the console stage), which causes lag (or even crashes on low-end devices) (unless the region is small enough for your hardware to handle), and for some every-plugin-f***ing reason the region doesn't generate and instead displays a **'...///bit32' not found: ...///bit32Library was not found** error, so I have nothing to do about these issues, except for one, which the devs must fix now if they are reading this message.
 
 Report bugs [here](https://github.com/TA874/Region-creation-stage-revamp/issues).
 
