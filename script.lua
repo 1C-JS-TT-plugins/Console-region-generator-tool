@@ -15,38 +15,48 @@ local saveDrawing=function()
 		return Drawing.setScale(x*sx,y*sy)
 	end
 end
-local function setX(self,x) return self:setPosition(x,self:getY()) end
-local function setY(self,y) return self:setPosition(self:getX(),y) end
-local function setXY(self,x,y) return self:setPosition(x,y) end
-local function setAXY(self,x,y)
+local function setX(self,x,...) return self:setPosition(x,self:getY(),...) end
+local function setY(self,y,...) return self:setPosition(self:getX(),y,...) end
+local function setXY(self,x,y,...) return self:setPosition(x,y,...) end
+local function setAX(self,x,...)
+	x=tonumber(x) or 0
+	local p=self:getParent()
+	return self:setPosition(x-p:getAbsoluteX(),self:getY(),...)
+end
+local function setAY(self,y,...)
+	y=tonumber(y) or 0
+	local p=self:getParent()
+	return self:setPosition(self:getX(),y-p:getAbsoluteY(),...)
+end
+local function setAXY(self,x,y,...)
 	x,y=tonumber(x) or 0,tonumber(y) or 0
 	local p=self:getParent()
-	return self:setPosition(x-p:getAbsoluteX(),y-p:getAbsoluteY())
+	return self:setPosition(x-p:getAbsoluteX(),y-p:getAbsoluteY(),...)
 end
-local function getAX(self) return self:getAbsoluteX() end
-local function getXY(self) return self:getX(),self:getY() end
-local function getAY(self) return self:getAbsoluteY() end
-local function getCAX(self) local p=self:getPadding() return self:getAbsoluteX()+p end
-local function getCAY(self) local _,p=self:getPadding() return self:getAbsoluteY()+p end
-local function getAXY(self) return self:getAbsoluteX(),self:getAbsoluteY() end
-local function getAXYWH(self) return self:getAbsoluteX(),self:getAbsoluteY(),self:getWidth(),self:getHeight() end
-local function getCAXY(self) local p2,p3=self:getPadding() return self:getAbsoluteX()+p2,self:getAbsoluteY()+p3 end
-local function setW(self,w) self:setSize(w,self:getHeight()) end
-local function setH(self,h) self:setSize(self:getWidth(),h) end
-local function setWH(self,w,h) self:setSize(w,h) end
-local function getCW(self) return self:getClientWidth() end
-local function getCH(self) return self:getClientHeight() end
-local function getCWH(self) return self:getClientWidth(),self:getClientHeight() end
-local function getW(self) return self:getWidth() end
-local function getH(self) return self:getHeight() end
-local function getWH(self) return self:getWidth(),self:getHeight() end
-local function addX(self,x) return self:setPosition(self:getX()+(tonumber(x) or 0),self:getY()) end
-local function addY(self,y) return self:setPosition(self:getX(),self:getY()+(tonumber(y) or 0)) end
-local function addXY(self,x,y) return self:setPosition(self:getX()+(tonumber(x) or 0),self:getY()+(tonumber(y) or 0)) end
-local function addW(self,w) return self:setSize(self:getWidth()+(tonumber(w) or 0),self:getHeight()) end
-local function addH(self,h) return self:setSize(self:getWidth(),self:getHeight()+(tonumber(h) or 0)) end
-local function addWH(self,w,h) return self:setSize(self:getWidth()+(tonumber(w) or 0),self:getHeight()+(tonumber(h) or 0)) end
-local function setXYWH(self,x,y,w,h) return self:setPosition(x,y),self:setSize(w,h) end
+local function getAX(self,...) return self:getAbsoluteX(...) end
+local function getXY(self,...) return self:getX(...),self:getY(...) end
+local function getAY(self,...) return self:getAbsoluteY(...) end
+local function getCAX(self,...) local p=self:getPadding() return self:getAbsoluteX(...)+p end
+local function getCAY(self,...) local _,p=self:getPadding() return self:getAbsoluteY(...)+p end
+local function getAXY(self,...) return self:getAbsoluteX(),self:getAbsoluteY(...) end
+local function getAXYWH(self,...) return self:getAbsoluteX(...),self:getAbsoluteY(...),self:getWidth(...),self:getHeight(...) end
+local function getCAXY(self,...) local p2,p3=self:getPadding() return self:getAbsoluteX(...)+p2,self:getAbsoluteY(...)+p3 end
+local function setW(self,w,...) return self:setSize(w,self:getHeight(),...) end
+local function setH(self,h,...) return self:setSize(self:getWidth(),h,...) end
+local function setWH(self,w,h,...) return self:setSize(w,h,...) end
+local function getCW(self,...) return self:getClientWidth(...) end
+local function getCH(self,...) return self:getClientHeight(...) end
+local function getCWH(self,...) return self:getClientWidth(),self:getClientHeight(...) end
+local function getW(self,...) return self:getWidth(...) end
+local function getH(self,...) return self:getHeight(...) end
+local function getWH(self,...) return self:getWidth(),self:getHeight(...) end
+local function addX(self,x,...) return self:setPosition(self:getX()+(tonumber(x) or 0),self:getY(),...) end
+local function addY(self,y,...) return self:setPosition(self:getX(),self:getY()+(tonumber(y) or 0),...) end
+local function addXY(self,x,y,...) return self:setPosition(self:getX()+(tonumber(x) or 0),self:getY()+(tonumber(y) or 0),...) end
+local function addW(self,w,...) return self:setSize(self:getWidth()+(tonumber(w) or 0),self:getHeight(),...) end
+local function addH(self,h,...) return self:setSize(self:getWidth(),self:getHeight()+(tonumber(h) or 0),...) end
+local function addWH(self,w,h,...) return self:setSize(self:getWidth()+(tonumber(w) or 0),self:getHeight()+(tonumber(h) or 0),...) end
+local function setXYWH(self,x,y,w,h,...) return self:setPosition(x,y,...),self:setSize(w,h,...) end
 local function getObjects(self)
 	local tbl={}
 	for i=1,self:countChildren() do
@@ -104,7 +114,10 @@ local function ths(s)
 	end)
 	return s3
 end
-local function copyTable(...) local tbl,a=... if type(tbl)=="table" then
+local function copyTable(...)
+	local tbl,a=...
+	assert(select("#",...)>=1,"bad argument #1 table expected, got no value")
+	assert(type(tbl)=="table","bad argument #1 table expected, got "..type(tbl))
 	local tbl2={}
 	for k,v in pairs(tbl) do
 		tbl2[k]=v
@@ -112,8 +125,7 @@ local function copyTable(...) local tbl,a=... if type(tbl)=="table" then
 	end
 	setmetatable(tbl2,getmetatable(tbl))
 	return tbl2
-elseif select("#",...)>=1 then error("bad argument #1 table expected, got "..type(tbl))
-else error("bad argument #1 table expected, got no value") end end
+end
 local function drawOutline(x,y,w,h,s)
 	s=tonumber(s) or 1
 	local sx2,sy2=Drawing.getScale()
@@ -130,8 +142,75 @@ local function drawOutline(x,y,w,h,s)
 	Drawing.drawRect(x+w-(sx*sx2),y+h-(sy*sy2),sx,sy)
 end
 local p2,p3,p4,p5=0,0,0,0
-local data={maps={},size=12,name="",seed="",bmp=""}
+local data={maps={},size=8,name="",seed="",bmp=""}
 local pdata={size=1}
+local function addButton(self,tbl)
+	local icon=tbl.icon
+	local text=tbl.text
+	local isPressed=function(...)
+		if isfunction(tbl.isPressed) then return tbl.isPressed(...) end
+	end
+	local getIcon=function(self) return tonumber(icon) or 0 end
+	local getText=function(self) return tostring(text or text==nil and "") end
+	local setIcon=function(self,v) icon=v end
+	local setText=function(self,v) text=v end
+	local click=function(self,...)
+		if not self:isEnabled() then return end
+		if isfunction(playClickSound) then playClickSound() end
+		if isfunction(tbl.onClick) then return tbl.onClick(self,...) end
+	end
+	local tbl2=copyTable(tbl)
+	tbl2.icon,tbl2.text=nil
+	tbl2.onDraw=function(self,x,y,w,h,...)
+		local setAlpha,setColor,setScale=saveDrawing()
+		setColor(0,0,isPressed() and 255 or 0)
+		setAlpha((not self:isEnabled()) and 0.05 or isPressed() and 0.1 or 0.075) 
+		Drawing.drawRect(x,y,w,h)
+		setColor(255,255,255) setAlpha(1)
+		if self:getTouchPoint() or self:isMouseOver() then
+			setColor(0,0,0)
+			if isPressed() then setColor(0,0,255) end
+			setAlpha((self:isEnabled() and isTouchPointInFocus(self)) and 0.1 or 0.05)
+			Drawing.drawRect(x,y,w,h)
+			setColor(255,255,255) setAlpha(1)
+		end
+		local icon=tonumber(icon) or 0
+		local iw,ih=Drawing.getImageSize(icon)
+		local text=tostring(text or text==nil and "")
+		local tw,th=Drawing.getTextSize(text)
+		local s0=math.min(1,w/iw,h/ih)
+		local s1=math.min(1,w/tw,h/th)
+		iw,ih=iw*s0,ih*s0
+		tw,th=tw*s1,th*s1
+		local ix=x+(w-iw)/2
+		local tx=x+(w-tw)/2
+		local a=icon>=1 and #text>=1 and w>=tw+iw
+		if a then
+			ix=x+(w-(iw+tw))/2
+			tx=ix+iw
+		end
+		setAlpha((not self:isEnabled()) and 0.5 or ((self:getTouchPoint() or self:isMouseOver()) and #text>=1 and not a) and 0.25 or 1)
+		setScale(s0,s0)
+		Drawing.drawImage(icon,ix,y+(h-ih)/2)
+		setColor(0,0,0) setScale(s1,s1)
+		setAlpha((not self:isEnabled()) and 0.5 or (a or self:getTouchPoint() or self:isMouseOver() or icon<1) and 1 or 0)
+		Drawing.drawText(text,tx,y+(h-th)/2)
+		setColor(255,255,255) setAlpha(1) setScale(1,1)
+		if isfunction(tbl.onDraw) then return tbl.onDraw(self,x,y,w,h,...) end
+	end
+	tbl2.onClick=function(...) return click(...) end
+	local r=function(k,self,...)
+		self.getIcon=getIcon
+		self.getText=getText
+		self.setIcon=setIcon
+		self.setText=setText
+		self.click=click
+		if isfunction(tbl[k]) then return tbl[k](self,...) end
+	end
+	tbl2.onInit=function(...) r("onInit",...) end
+	tbl2.onUpdate=function(...) r("onUpdate",...) end
+	return self:addCanvas(tbl2)
+end
 local function getMap(x,y,i)
 	i=tonumber(i) or 0
 	local v2
@@ -168,8 +247,12 @@ local function getJson()
 	"name":"]]..data.name..[[",
 	"seed":"]]..data.seed..[[",
 	"size":]]..(tonumber(data.size) or 0)..[[,
-	"bmp":"]]..data.bmp..[[",
-	"maps":]].."[\n\t\t"
+	]]
+	if tostring(data.bmp):trim():endsWith(".png")
+	or tostring(data.bmp):trim():endsWith(".jpg")
+	or tostring(data.bmp):trim():endsWith(".jpeg")
+	then json=json..'"bmp":"'..data.bmp..",\n\t" end
+	json=json..'"maps":[\n\t\t'
 	local maps0={}
 	for _,v in pairs(data.maps) do table.insert(maps0,v) end
 	table.sort(maps0,function(a,b) return (a[1]+1)*(a[2]+1)<(b[1]+1)*(b[2]+1) end)
@@ -189,7 +272,7 @@ local function generateRegion()
 	if (bmp:len()>=1) and (not (bmp:endsWith(".png") or bmp:endsWith(".jpg") or bmp:endsWith(".jpeg") or bmp:endsWith(".heic"))) then Debug.toast(data.bmp.." is not a heightmap (unsupported file type)") return end
 	if not next(data.maps) then Debug.toast("Cannot generate an empty region") return end
 	local i,tt=0,Runtime.getTime()
-	local fb=""
+	local fb="error"
 	local a
 	GUI.getRoot():addCanvas {
 		onInit=function(self)
@@ -208,11 +291,12 @@ local function generateRegion()
 					self:addButton {
 						w=0,h=30,
 						onUpdate=function(self)
+							local p=self:getParent()
 							setW(self,0)
 							local i=(Runtime.getTime()-tt)/1000
-							if i>10 then self:delete() end
+							if i>10 then self:delete() return end
 							self:setText("Cancel ("..10-math.floor(i)..")")
-							setXY(self,(getW(self:getParent())/2)-(getW(self)/2),getH(self:getParent())-getH(self))
+							setXY(self,(getW(p)/2)-(getW(self)/2),getH(p)-getH(self))
 						end,
 						onClick=function() self:getParent():delete() end
 					}
@@ -236,11 +320,15 @@ local function generateRegion()
 			local ttt=(Runtime.getTime()-tt)/1000
 			if ttt>=11 then
 				i=i+1
-				if i==1 then
-					TheoTown.execute(getJson(),function(...) fb=... end)
+				if i==1 then Runtime.postpone(function()
+					local er0,er1=pcall(function()
+						TheoTown.execute(getJson(),function(...) fb=... end)
+					end)
 					Debug.log(fb) Debug.toast(fb)
+					self:delete()
 					Runtime.popStage() Runtime.popStage()
-				end
+					assert(er0,er1)
+				end) end
 			end
 		end,
 		onDraw=function(self,x,y,w,h)
@@ -254,23 +342,26 @@ local function generateRegion()
 		end
 	}
 end
-local function deleteAllMaps()
+local function removeAllMaps()
+	if not next(data.maps) then Debug.toast("No maps to remove") return end
 	if next(data.maps,1) then
 		GUI.createDialog {
 			w=180,h=64,
-			title="Delete all "..#data.maps.." maps?",
+			title="Remove all "..#data.maps.." maps?",
 			pause=false,
 			actions={
 				{icon=Icon.CANCEL,text="Cancel"},
 				{
 					icon=Icon.REMOVE,
-					text="Delete all",
+					text="Remove all",
 					onClick=function() while next(data.maps) do table.remove(data.maps) end Debug.toast("All maps successfully deleted") end
 				}
 			}
 		}
-	elseif next(data.maps) then while next(data.maps) do table.remove(data.maps) end Debug.toast("A map has been deleted")
-	else Debug.toast("No maps to delete") end
+		return
+	end
+	while next(data.maps) do table.remove(data.maps) end
+	Debug.toast("A map has been removed")
 end
 local addTextField
 local selectedMap
@@ -285,103 +376,148 @@ local function openMenu(p,v)
 			setAXY(self,0,0)
 			setW(self,getW(self)+p2+p4)
 			setH(self,getH(self)+p3+p5)
-			local l
-			self:addPanel {
+			local l,sl
+			local r=function(self)
+				local _,p3,_,p5=self:getPadding()
+				setH(self,getH(l)+p3+p5)
+				setAY(self,getAY(p)-getH(self))
+				if (not (istable(sl) and sl:isValid())) or (not (sl:getChild(1):getTouchPoint() or sl:getChild(1):getChild(1):getTouchPoint())) then setAX(self,getAX(p)+(getW(p)/2)-(getW(self)/2)) end
+				setXY(self,math.max(0,math.min(self:getX(),getW(self:getParent())-getW(self))),math.max(0,math.min(self:getY(),getH(self:getParent())-getH(self))))
+			end
+			self:addCanvas {
 				w=134,h=0,
+				onDraw=function(self,x,y,w,h)
+					Drawing.drawRect(x,y,w,h)
+					local setAlpha,setColor=saveDrawing()
+					setAlpha(0.5) setColor(0,0,0)
+					drawOutline(x,y,w,h)
+					setAlpha(1) setColor(255,255,255)
+				end,
 				onInit=function(self)
 					self:setPadding(2,2,2,2)
 					local size=function() return tonumber(data.size) or 0 end
 					local s,ss=2,{1}
 					while s<size() do ss[#ss+1]=s s=s+2 end
-					l=self:addLayout {vertical=true}
-					l:addLayout {h=20}
-					:addLabel {w=25,text=Translation.createcity_mapsize}
-					:getParent():addSlider {
-						h=20,minValue=1,w=-20,
-						maxValue=tonumber(data.size) and (tonumber(data.size) or 0)+0.5 or 0,
-						getValue=function() return v[3]*((size()+0.5)/size()) end,
-						getText=function() return v[3] end,
-						setValue=function(vv)
-							v[3]=math.floor(vv)
-							for i,vvv in pairs(ss) do
-								v[3]=math.min(v[3],size())
-								local e=ss[i+1] or size()
-								if v[3]>=vvv and v[3]<(e-((e-vvv)/2)) then v[3]=vvv end
-								if v[3]<e and v[3]>=(e-((e-vvv)/2)) then v[3]=vvv end
-							end
-							pdata.size=v[3]
-						end,
-					}
-					l:addButton {
-						h=20,icon=Icon.REGION_SPLIT,
-						text=Translation.createregion_split,
-						onClick=function()
-							local os=v[3]
-							v[3]=os/2
-							Runtime.postpone(function()
-								local s=0
-								while s<os do s=s+v[3] end
-								local ss=v[3]/os
-								for x=0,os-v[3],v[3] do for y=0,os-v[3],v[3] do if x~=0 or y~=0 then
-									local np=newMap()
-									np[3]=v[3]
-									np[1]=v[1]+x
-									np[2]=v[2]+y
-								end end end
-							end)
+					local r2=function(self)
+						local h=0
+						for i=1,self:countChildren() do
+							local c=self:getChild(i)
+							setY(c,h) h=h+getH(c)+1
+						end
+						setH(self,h)
+						local p=self:getParent()
+						setXY(self,(getCW(p)-getW(self))/2,(getCH(p)-getH(self))/2)
+					end
+					l=self:addCanvas {onUpdate=function(...) r2(...) end}
+					l:setTouchThrough(true)
+					l:addCanvas {
+						h=20,
+						onInit=function(self)
+							self:setTouchThrough(true)
+							self:addLabel {w=25,text=Translation.createcity_mapsize}
+							self:addSlider {
+								h=20,x=21,minValue=1,
+								onInit=function(self) sl=self end,
+								onUpdate=function(self) sl=self end,
+								maxValue=tonumber(data.size) and (tonumber(data.size) or 0)+0.5 or 0,
+								getValue=function() return v[3]*((size()+0.5)/size()) end,
+								getText=function() return v[3] end,
+								setValue=function(vv)
+									v[3]=math.floor(vv)
+									for i,vvv in pairs(ss) do
+										v[3]=math.min(v[3],size())
+										local e=ss[i+1] or size()
+										if v[3]>=vvv and v[3]<(e-((e-vvv)/2)) then v[3]=vvv end
+										if v[3]<e and v[3]>=(e-((e-vvv)/2)) then v[3]=vvv end
+									end
+									pdata.size=v[3]
+								end,
+							}
 						end
 					}
-					:getParent():addButton {
-						h=20,icon=Icon.REMOVE,
-						text=Translation.loadcity_cmddelete,
-						onClick=function() for i,vv in pairs(data.maps) do if vv==v then table.remove(data.maps,i) del=true break end end end
+					l:addCanvas {
+						h=20,
+						onUpdate=function(self)
+							local p=self:getParent() setWH(self,getW(p),math.min(20,getH(p)))
+							local cc=self:countChildren()
+							for i=1,cc do
+								local c=self:getChild(i)
+								setW(c,(getW(self)/cc)-1)
+								setX(c,(getW(self)-getW(c))*((i-1)/(cc-1)))
+							end
+						end,
+						onInit=function(self)
+							addButton(self,{
+								h=20,icon=Icon.REGION_SPLIT,
+								text=Translation.createregion_split,
+								onClick=function()
+									local os=v[3]
+									v[3]=os/2
+									Runtime.postpone(function()
+										local s=0
+										while s<os do s=s+v[3] end
+										local ss=v[3]/os
+										for x=0,os-v[3],v[3] do for y=0,os-v[3],v[3] do if x~=0 or y~=0 then
+											local np=newMap()
+											np[3]=v[3]
+											np[1]=v[1]+x
+											np[2]=v[2]+y
+										end end end
+									end)
+								end
+							})
+							addButton(self,{
+								h=20,icon=Icon.REMOVE,
+								text=TheoTown.translate("toolremove_default_title"),
+								onClick=function() for i,vv in pairs(data.maps) do if vv==v then table.remove(data.maps,i) del=true break end end end
+							})
+						end
 					}
-					:getParent():getParent()
-					local h=0 for _,v in pairs(getObjects(l:getFirstPart())) do h=h+getH(v) end setH(l,h) setH(self,h+6)
-					setAXY(self,getAX(p)+(getW(p)/2)-(getW(self)/2),getAY(p)-getH(self))
+					r2(l) r(self)
 				end,
-				onUpdate=function(self)
-					local h=0 for _,v in pairs(getObjects(l:getFirstPart())) do h=h+getH(v) end
-					setH(l,h) setH(self,h+8)
-					setXY(self,math.max(0,math.min(self:getX(),getW(self:getParent())-getW(self))),math.max(0,math.min(self:getY(),getH(self:getParent())-getH(self))))
-				end
+				onUpdate=function(self) r(self) end
 			}
 		end,
 		onUpdate=function(self) if del then selectedMap=nil self:delete() end end,
 		onClick=function(self) selectedMap=nil self:delete() end,
 	}:setTouchThrough(true)
 end
-local function openStage()
+local function openStage(onu,onc)
+	local onu=function() if isfunction(onu) then return onu() end end
+	local onc=function() if isfunction(onc) then return onc() end end
 	local stage
-	pcall(function()
-		local p=GUI.get("pageControl"):getParent()
-		while tostring(p:getParent())~=tostring(GUI.getRoot()) do p=p:getParent() end
-		p:delete()
-		--for _,v in pairs(GUI.getRoot():getObjects()) do v:delete() end
-		GUI.getRoot():addCanvas {
-			onInit=function(self) setXY(self,-p2,-p3) setWH(self,getW(self)+p2+p4,getH(self)+p3+p5) end,
-			onClick=function(self) Runtime.popStage() Runtime.popStage() end,
-		}
-	end)
-	pcall(function() if GUI.getRoot():getChild(1) then for _,v in pairs(GUI.getRoot():getChild(1):getObjects()) do v:delete() end end end)
-	stage=GUI.getRoot():addCanvas {}
+	GUI.getRoot():addCanvas {
+		onInit=function(self)
+			setXY(self,-p2,-p3)
+			addWH(self,p2+p4,p3+p5)
+		end,
+		onUpdate=function() onu() end,
+		onClick=function(self) self:delete() onc() end,
+		onDraw=function(self,x,y,w,h)
+			local setAlpha,setColor=saveDrawing()
+			setAlpha(0.5) setColor(0,0,0)
+			Drawing.drawRect(x,y,w,h)
+			setAlpha(1) setColor(255,255,255)
+		end
+	}
+	:addCanvas {
+		onInit=function(self)
+			self:setTouchThrough(true)
+			setXY(self,p2,p3)
+			addWH(self,-p2-p4,-p3-p5)
+			stage=self:addCanvas {}
+		end
+	}
 	setWH(stage,math.min(600,getW(stage)),math.min(500,getH(stage)))
 	setXY(stage,(getCW(stage:getParent())/2)-(getW(stage)/2),(getCH(stage:getParent())/2)-(getCH(stage)/2))
-	stage:addLayout {
+	stage:addCanvas {
 		h=34,
 		onInit=function(self)
-			self:addIcon {w=34,icon=Icon.CITY}
-			self:addLabel {
-				text=TheoTown.translate("createregion_title"),
-				font=Font.BIG,
-				onInit=function(self) self:setFont(Font.BIG) end,
-				w=-30
-			}:setColor(255,255,255)
 			addCloseButton(self:getLastPart(),{
-				id="cmdClose",w=30,
+				id="cmdClose",w=30,x=-30,
 				onClick=function()
-					Runtime.popStage()
-					Runtime.popStage()
+					stage:getParent():getParent():delete()
+					onc()
 				end
 			})
 		end
@@ -421,7 +557,33 @@ local function openStage()
 					}
 					self:addCanvas {
 						onInit=function(self)
-							self:addCanvas {onUpdate=function(self) local p=self:getParent() setWH(self,getW(p),getH(p)) end}
+							self:addCanvas {
+								h=30,
+								onUpdate=function(self)
+									local p=self:getParent() setWH(self,getW(p),math.min(30,getH(p)))
+									local cc=self:countChildren()
+									for i=1,cc do
+										local c=self:getChild(i)
+										setW(c,(getW(self)/cc)-1)
+										setX(c,(getW(self)-getW(c))*((i-1)/(cc-1)))
+									end
+								end,
+								onInit=function(self)
+									addButton(self,{
+										w=0,
+										icon=Icon.PLUS,
+										text="Add map",
+										onClick=function() newMap() end,
+									})
+									addButton(self,{
+										w=0,
+										icon=Icon.REMOVE,
+										text="Remove all",
+										onClick=function() removeAllMaps() end,
+									})
+								end
+							}
+							self:addCanvas {y=31,onUpdate=function(self) local p=self:getParent() setWH(self,getW(p),getH(p)-31) end}
 							:addCanvas {
 								onUpdate=function(self)
 									local s=math.min(getW(self:getParent()),getH(self:getParent()))
@@ -554,7 +716,30 @@ local function openStage()
 							self:addCanvas {
 								onInit=function(self)
 									setX(self,2) setW(self,getW(self)-4)
-									self:addLayout {
+									local function addLayout(tbl)
+										local tbl2=copyTable(tbl)
+										local r=function(self,...)
+											local w=0 for i=1,self:countChildren() do
+												local c=self:getChild(i)
+												setX(c,w) w=w+getW(c)+1
+											end
+										end
+										tbl2.onInit=function(self,...)
+											self:setTouchThrough(true)
+											local er0,er1,arg=true
+											if isfunction(tbl.onInit) then er0,er1=pcall(function(...) arg={tbl.onInit(self,...)} end,...) end
+											r(self,...)
+											assert(er0,er1)
+											if istable(arg) then return table.unpack(arg) end
+										end
+										tbl2.onUpdate=function(self,...)
+											self:setTouchThrough(true)
+											r(self,...)
+											if isfunction(tbl.onUpdate) then return tbl.onUpdate(self,...) end
+										end
+										return self:addCanvas(tbl2)
+									end
+									addLayout {
 										h=30,
 										onInit=function(self)
 											local seed local function setRandomSeed() seed:setText(math.random(0,99999999999)) end
@@ -582,7 +767,7 @@ local function openStage()
 											})--size
 										end
 									}-- size
-									self:addLayout {
+									addLayout {
 										h=30,
 										onInit=function(self)
 											local seed local function setRandomSeed() seed:setText(math.random(0,99999999999)) end
@@ -596,24 +781,24 @@ local function openStage()
 													if data.seed~=text then data.seed=text end
 												end
 											})
-											self:addButton {w=30,icon=Icon.RANDOM,onClick=function() setRandomSeed() end,onUpdate=function(self) setW(self,math.min(getW(self:getParent())-71,getW(self))) setX(self,math.max(71,getW(self:getParent())-getW(self))) end}
+											addButton(self,{w=30,icon=Icon.RANDOM,onClick=function() setRandomSeed() end,onUpdate=function(self) setW(self,math.min(getW(self:getParent())-71,30)) setX(self,math.max(71,getW(self:getParent())-getW(self))) end})
 											if data.seed=="" then setRandomSeed() end
 										end
 									}-- seed
-									self:addLayout {
+									addLayout {
 										h=30,
 										onInit=function(self)
 											self:addCanvas {
 												w=70,
 												onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end,
 												onClick=function(self)
-													local link="https://forum.theotown.com/viewtopic.php?f=35&t=10039"
+													local link="https://forum.theotown.com/viewtopic.php?t=10039"
 													GUI.createDialog {
 														h=211,
 														--title="Tutorial",
 														text=({
 															"Heightmap field is optional.\n"..
-															"Enter the heightmap image file name (ending in .png, .jpeg, etc.). You can find it in <source>/TheoTown folder and not it's subfolders.\n"..
+															"Enter the heightmap image file name (ending in .png, .jpeg, etc.). It should be in <source>/TheoTown folder and not it's subfolders.\n"..
 															"\n"..
 															"<source>:\n"..
 															"Android: /storage/emulated/0/android/data/"..Runtime.getId().."/files\n"..
@@ -647,10 +832,10 @@ local function openStage()
 													if data.bmp~=text then data.bmp=text end
 												end
 											})
-											self:addButton {w=30,icon=Icon.FOLDER,onUpdate=function(self) setW(self,math.min(getW(self:getParent())-71,getW(self))) setX(self,math.max(71,getW(self:getParent())-getW(self))) end}:setEnabled(lse)
+											addButton(self,{w=30,icon=Icon.FOLDER,onUpdate=function(self) setW(self,math.min(getW(self:getParent())-71,30)) setX(self,math.max(71,getW(self:getParent())-getW(self))) end}):setEnabled(lse)
 										end
 									}-- heightmap
-									self:addLayout {
+									addLayout {
 										h=30,
 										onInit=function(self)
 											self:addLabel {text=Translation.createregion_regionname,w=70,onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end}
@@ -667,7 +852,7 @@ local function openStage()
 													if data.name~=text then data.name=text end
 												end
 											})
-											self:addButton {w=30,icon=Icon.RANDOM,onUpdate=function(self) setW(self,math.min(getW(self:getParent())-71,getW(self))) setX(self,math.max(71,getW(self:getParent())-getW(self))) end}:setEnabled(false)
+											addButton(self,{w=30,icon=Icon.RANDOM,onUpdate=function(self) setW(self,math.min(getW(self:getParent())-71,30)) setX(self,math.max(71,getW(self:getParent())-getW(self))) end}):setEnabled(false)
 										end
 									}-- region name
 									do local aw,t,pt,pw=75 self:addCanvas {
@@ -680,13 +865,13 @@ local function openStage()
 												{Icon.HILLS,"terrain",Translation.createcity_terrain},
 												{Icon.WINTER,"snow",Translation.createcity_snow},
 											}
-											do self:addButton {
+											do addButton(self,{
 												w=0,text=v[3],icon=v[1],
 												onUpdate=function(self) setW(self,math.min(getW(self:getParent()),getW(self))) end,
 												isPressed=function() return TheoTown.SETTINGS[v[2]] end,
 												onClick=function() TheoTown.SETTINGS[v[2]]=not TheoTown.SETTINGS[v[2]] end,
 												onInit=function(self) aw=math.max(aw,getW(self)) end
-											} end
+											}) end
 										end,
 										onUpdate=function(self)
 											local p=self:getParent()
@@ -776,44 +961,74 @@ local function openStage()
 					Drawing.resetClipping()
 				end
 			}
-			self:addLayout {
+			self:addCanvas {
 				h=30,y=-32,
-				id="pageControl",
 				onInit=function(self)
-					self:addButton {
-						w=0,
-						icon=Icon.PLUS,
-						text="New map",
-						onClick=function() newMap() end,
-					}
-					self:getLastPart ():addButton {
-						w=0,
-						icon=Icon.REMOVE,
-						onClick=function() deleteAllMaps() end,
-					}
-					self:getLastPart():addButton {
-						w=0,
-						text="View JSON",
+					local xx,sx=0,0
+					local pt=Runtime.getTime()
+					local pjson
+					addButton(self,{
+						w=30,
+						icon=Icon.TURN_RIGHT,
 						onClick=function()
-							local json=getJson()
-							GUI.createDialog {
-								text=json:gsub("\t",(" "):rep(6)),
-								actions={
-									text="Copy",
-									icon=Icon.COPY,
-									onClick=function() Runtime.setClipboard(json) end,
-								}
-							}.text:setSLN(true)
+							data.json=getJson()
+							if data.json~=pjson then xx=0 end
+							pjson=data.json
+						end
+					})
+					self:addCanvas {
+						x=31,w=-32,
+						onDraw=function(self,x,y,w,h)
+							local setAlpha,setColor=saveDrawing()
+							Drawing.setClipping(x,y,w,h)
+							local json=tostring(data.json or data.json==nil and "<-- Click here to generate json")
+							--local json=tostring(json or json==nil and "3")
+							local json2=json
+							local tw=Drawing.getTextSize(json)
+							local sw=Drawing.getTextSize((" "):rep(10))
+							while tw<=w do
+								json=json..(" "):rep(10)..json2
+								tw=Drawing.getTextSize(json)
+							end
+							tw=tw+Drawing.getTextSize((" "):rep(10))
+							setColor(0,0,0)
+							Drawing.drawText(json..(" "):rep(10)..json,x-(tw*xx),y+h/2,nil,0,0.5)
+							setColor(255,255,255)
+							Drawing.resetClipping()
+						end,
+						onUpdate=function(self)
+							local tw=0
+							do
+								local json=tostring(data.json or data.json==nil and "<-- Click here to generate json")
+								--local json=tostring(json or json==nil and "3")
+								local json2=json
+								tw=Drawing.getTextSize(json)
+								while tw<=getW(self) do
+									json=json..(" "):rep(10)..json2
+									tw=Drawing.getTextSize(json)
+								end
+								tw=tw+Drawing.getTextSize((" "):rep(10))
+							end
+							local t=Runtime.getTime()
+							if data.json and self:getTouchPoint() then _,_,_,_,sx=self:getTouchPoint() else
+								xx=xx+(0.5/(tw/1000))*((t-pt)/10000)
+								sx=sx*0.8
+							end
+							pt=t
+							xx=xx-(sx/tw)
+							xx=xx%1
 						end
 					}
-					self:getLastPart():addButton {
-						w=0,
-						meta={okButton=true},
-						golden=true,
-						icon=Icon.OK,
-						text="Generate now",
-						onClick=function() generateRegion() end,
-					}
+					addButton(self,{
+						w=30,x=-30,
+						icon=Icon.COPY,
+						onInit=function(self) self:setEnabled(not not json) end,
+						onUpdate=function(self) self:setEnabled(not not json) end,
+						onClick=function()
+							Runtime.setClipboard(json)
+							Debug.toast("Json copied to clipboard, paste into command field to generate region.")
+						end
+					})
 				end
 			}-- pageControl
 		end,
@@ -830,8 +1045,7 @@ local function openStage()
 		end
 	}
 end
-function script:enterStage(s)
-	local addTextField2=GUI.addTextField
+do
 	local addTextField3=function(self,tbl)
 		local text,ptext=tbl.text
 		local font=Font.DEFAULT
@@ -883,7 +1097,7 @@ function script:enterStage(s)
 								self:setPosition(tf:getAbsoluteX(),tf:getAbsoluteY())
 								text=self:getText()
 							end
-							addTextField2(self,tbl2)
+							GUI.addTextField(self,tbl2)
 						end,
 						onUpdate=function(self) setWH(self,getWH(GUI.getRoot())) setXY(self,-p2,-p3) end,
 						onClick=function(self) self:delete() end
@@ -923,7 +1137,26 @@ function script:enterStage(s)
 		if Runtime.getPlatform()~="android" then return GUI.addTextField(...) end
 		return addTextField3(...)
 	end
-	if s=="CreateCityStage1;region=true" then openStage() end
+end
+function script:enterStage(s)
+	if s=="ConsoleStage" then
+		local pgc=GUI.get("pageControl")
+		local cte=pgc:getChild(4)
+		addW(cte,-32)
+		pgc:getLastPart():addButton {
+			w=30,icon=Icon.BIGBIGEXTRA_MAP,
+			onInit=function(self)
+				self:setChildIndex(1)
+			end,
+			onClick=function(self)
+				local a=cte:isVisible()
+				openStage(
+					function() if Runtime.getPlatform()=="android" then cte:setVisible(false) end end,
+					function() if Runtime.getPlatform()=="android" then cte:setVisible(a) end end
+				)
+			end
+		}
+	end
 end
 local tt=Runtime.getTime()
 function script:overlay()

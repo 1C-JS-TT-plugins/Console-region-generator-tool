@@ -1,5 +1,7 @@
-[{
-	"id":"$rcsr00",
-	"type":"data",
-	"script":"script.lua"
-}]
+[
+	{
+		"id":"$crgt00",
+		"type":"script",
+		"script":"crgt.lua"
+	}
+]
