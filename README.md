@@ -11,4 +11,4 @@ How to use (click the image below, and don't forget to subscribe to the channel)
 
 Report bugs [here](https://github.com/AFP-TheoTown-plugins/Console-region-generator-tool/issues).
 
-You can also download from [here](https://forum.theotown.com/viewtopic.php?f=73&t=16224), or from the plugin store.
+You can also download from [here](https://forum.theotown.com/viewtopic.php?t=16224), or from the plugin store.
