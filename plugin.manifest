@@ -1,10 +1,10 @@
 {
-  "id":"$rcsr",
-  "version":200,
-  "title":"Region creation stage revamp v2.0",
+  "id":"$crgt",
+  "version":310,
+  "title":"Console region generator tool v3.1",
   "text":"",
   "author":"AFP",
   "category":false,
-  "url":"https://github.com/AFP-TheoTown-plugins/Region-creation-stage-revamp/raw/main/Region%20creation%20stage%20revamp.plugin",
+  "url":"https://github.com/AFP-TheoTown-plugins/Console-region-generator-tool/raw/main/Console%20region%20generator%20tool.plugin",
   "multiplayer":true
 }
