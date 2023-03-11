@@ -73,6 +73,7 @@ local function isTouchPointInFocus(self,...)
 end
 local getUIColor=function(i,ii,iii,...)
 	if istable(GUIR) and isfunction(GUIR.getUIColor) then return GUIR.getUIColor(i,ii,...) end
+	--ii=not ii
 	local i0=255 if ii and not iii then i0=0 end
 	return i0,i0,i0
 end
@@ -142,46 +143,98 @@ local function drawOutline(x,y,w,h,s)
 	Drawing.drawRect(x+w-(sx*sx2),y+h-(sy*sy2),sx,sy)
 end
 local p2,p3,p4,p5=0,0,0,0
-local data={maps={},size=8,name="",seed="",bmp=""}
+local data
 local pdata={size=1}
+local function updateMaps()
+	local maps=data.maps
+	for k,v in pairs(maps) do
+		if not isnumber(k) then
+			maps[k]=nil
+		end
+	end
+	local maps2={}
+	for _,v in pairs(maps) do
+		if istable(v) and v.valid then
+			table.insert(maps2,v)
+		end
+	end
+	for k in pairs(maps) do maps[k]=nil end
+	for _,v in ipairs(maps2) do
+		table.insert(maps,v)
+	end
+	local tn=function(v) return tonumber(v) or 0 end
+	table.sort(maps,function(a,b)
+		return tn(a.ord)<tn(b.ord)
+	end)
+	for i,v in pairs(maps) do v.ord=i end
+	table.sort(maps,function(a,b)
+		return tn(a.ord)<tn(b.ord)
+	end)
+end
+function script:lateInit()
+	data=Util.optStorage(TheoTown.getStorage(),script:getDraft():getId())
+	data.presets=istable(data.presets) and data.presets or (function()
+		local t={}
+		for i=1,16 do t[i]=false end
+		return t
+	end)()
+	data.maps=false and istable(data.maps) and data.maps or {}
+	data.size=tonumber(data.size) or 8
+	data.name=isstring(data.name) and data.name or ""
+	data.seed=isstring(data.seed) and data.seed or ""
+	data.bmp=isstring(data.bmp) and data.bmp or ""
+	for i=1,16 do
+		local v=data.presets[i]
+		data.presets[i],data.presets[tostring(i)]=istable(v) and v
+	end
+	for k,v in pairs(data.maps) do
+		if tonumber(k) and istable(v) then
+			data.maps[tonumber(k)],data.maps[k]=v
+		end
+	end
+	updateMaps()
+end
 local function addButton(self,tbl)
 	local icon=tbl.icon
 	local text=tbl.text
 	local isPressed=function(...)
 		if isfunction(tbl.isPressed) then return tbl.isPressed(...) end
 	end
-	local getIcon=function(self) return tonumber(icon) or 0 end
-	local getText=function(self) return tostring(text or text==nil and "") end
-	local setIcon=function(self,v) icon=v end
-	local setText=function(self,v) text=v end
-	local click=function(self,...)
-		if not self:isEnabled() then return end
-		if isfunction(playClickSound) then playClickSound() end
-		if isfunction(tbl.onClick) then return tbl.onClick(self,...) end
-	end
+	local lf={
+		getIcon=function(self) return tonumber(icon) or 0 end,
+		getText=function(self) return tostring(text or text==nil and "") end,
+		setIcon=function(self,v) icon=v end,
+		setText=function(self,v) text=v end,
+		click=function(self,...)
+			if not self:isEnabled() then return end
+			if isfunction(playClickSound) then playClickSound() end
+			if isfunction(tbl.onClick) then return tbl.onClick(self,...) end
+		end,
+	}
 	local tbl2=copyTable(tbl)
-	tbl2.icon,tbl2.text=nil
+	tbl2.icon,tbl2.text,tbl2.isPressed=nil
 	tbl2.onDraw=function(self,x,y,w,h,...)
 		local setAlpha,setColor,setScale=saveDrawing()
-		setColor(0,0,isPressed() and 255 or 0)
+		setColor(getUIColor(1,true))
+		if isPressed() then setColor(0,0,255) end
 		setAlpha((not self:isEnabled()) and 0.05 or isPressed() and 0.1 or 0.075) 
 		Drawing.drawRect(x,y,w,h)
 		setColor(255,255,255) setAlpha(1)
-		if self:getTouchPoint() or self:isMouseOver() then
-			setColor(0,0,0)
+		if self:isEnabled() and (self:getTouchPoint() or self:isMouseOver()) then
+			setColor(getUIColor(1,true))
 			if isPressed() then setColor(0,0,255) end
-			setAlpha((self:isEnabled() and isTouchPointInFocus(self)) and 0.1 or 0.05)
+			setAlpha(isTouchPointInFocus(self) and 0.1 or 0.05)
 			Drawing.drawRect(x,y,w,h)
 			setColor(255,255,255) setAlpha(1)
 		end
-		local icon=tonumber(icon) or 0
+		local icon=lf.getIcon()
 		local iw,ih=Drawing.getImageSize(icon)
-		local text=tostring(text or text==nil and "")
+		local text=lf.getText()
 		local tw,th=Drawing.getTextSize(text)
 		local s0=math.min(1,w/iw,h/ih)
-		local s1=math.min(1,w/tw,h/th)
+		local sx1,sy1=math.min(1,w/tw),math.min(1,h/th)
 		iw,ih=iw*s0,ih*s0
-		tw,th=tw*s1,th*s1
+		tw,th=tw*sx1,th*sy1
 		local ix=x+(w-iw)/2
 		local tx=x+(w-tw)/2
 		local a=icon>=1 and #text>=1 and w>=tw+iw
@@ -189,22 +242,23 @@ local function addButton(self,tbl)
 			ix=x+(w-(iw+tw))/2
 			tx=ix+iw
 		end
-		setAlpha((not self:isEnabled()) and 0.5 or ((self:getTouchPoint() or self:isMouseOver()) and #text>=1 and not a) and 0.25 or 1)
+		setAlpha(((self:getTouchPoint() or self:isMouseOver()) and #text>=1 and not a) and 0.25 or 1)
+		if not self:isEnabled() then Drawing.setAlpha(Drawing.getAlpha()*0.3) end
 		setScale(s0,s0)
 		Drawing.drawImage(icon,ix,y+(h-ih)/2)
-		setColor(0,0,0) setScale(s1,s1)
-		setAlpha((not self:isEnabled()) and 0.5 or (a or self:getTouchPoint() or self:isMouseOver() or icon<1) and 1 or 0)
+		setColor(getUIColor(1,true)) setScale(sx1,sy1)
+		setAlpha((a or self:getTouchPoint() or self:isMouseOver() or icon<1) and 1 or 0)
+		if not self:isEnabled() then Drawing.setAlpha(Drawing.getAlpha()*0.3) end
 		Drawing.drawText(text,tx,y+(h-th)/2)
 		setColor(255,255,255) setAlpha(1) setScale(1,1)
 		if isfunction(tbl.onDraw) then return tbl.onDraw(self,x,y,w,h,...) end
 	end
-	tbl2.onClick=function(...) return click(...) end
+	tbl2.onClick=function(...) return lf.click(...) end
 	local r=function(k,self,...)
-		self.getIcon=getIcon
-		self.getText=getText
-		self.setIcon=setIcon
-		self.setText=setText
-		self.click=click
+		for k,v in pairs(lf) do
+			if isfunction(GUI[k]) then self[k]=v
+			else self[k]=nil end
+		end
 		if isfunction(tbl[k]) then return tbl[k](self,...) end
 	end
 	tbl2.onInit=function(...) r("onInit",...) end
@@ -212,23 +266,26 @@ local function addButton(self,tbl)
 	return self:addCanvas(tbl2)
 end
 local function getMap(x,y,i)
-	i=tonumber(i) or 0
 	local v2
-	local i2=0
-	local ii
-	while next(data.maps,ii) do
-		local _,v=next(data.maps,ii)
-		if type(v)=="table" then
-			if x>=v[1] and x<v[1]+v[3] and
-			y>=v[2] and y<v[2]+v[3] then i2=i2+1 if i2>=1 then v2=v break end end
+	er0,er1=pcall(function()
+		i=tonumber(i) or 0
+		local i2=0
+		local ii
+		while next(data.maps,ii) do
+			local _,v=next(data.maps,ii)
+			if type(v)=="table" then
+				if x>=v[1] and x<v[1]+v[3] and
+				y>=v[2] and y<v[2]+v[3] then i2=i2+1 if i2>=1 then v2=v break end end
+			end
+			ii=(tonumber(ii) or 0)+1
 		end
-		ii=(tonumber(ii) or 0)+1
-	end
+	end)
+	Runtime.postpone(function() assert(er0,er1) end)
 	return v2
 end
 local function newMap()
 	local pv
-	local v2={0,0,pdata.size}
+	local v2={valid=true,ord=#data.maps+1,0,0,pdata.size}
 	local tl={}
 	for y=data.size-1,0,-1 do for x=0,data.size-1 do if not getMap(x,y) then v2[1],v2[2]=x,y break end end end
 	if v2[1] and v2[2] then table.insert(data.maps,v2) end
@@ -343,31 +400,194 @@ local function generateRegion()
 	}
 end
 local function removeAllMaps()
-	if not next(data.maps) then Debug.toast("No maps to remove") return end
-	if next(data.maps,1) then
+	local maps=data.maps
+	if #maps<1 then Debug.toast("No maps to remove") return end
+	local function remove()
+		local ii=0
+		for k,v in pairs(maps) do
+			if istable(v) then for k in pairs(v) do v[k]=nil end end
+			maps[k]=nil
+			ii=ii+1
+		end
+		local s="s"
+		if ii==1 then s="" end
+		Debug.toast(ii.." map"..s.." has been removed")
+	end
+	if #maps>=2 then
 		GUI.createDialog {
 			w=180,h=64,
-			title="Remove all "..#data.maps.." maps?",
+			title="Remove all "..#maps.." maps?",
 			pause=false,
 			actions={
 				{icon=Icon.CANCEL,text="Cancel"},
 				{
 					icon=Icon.REMOVE,
 					text="Remove all",
-					onClick=function() while next(data.maps) do table.remove(data.maps) end Debug.toast("All maps successfully deleted") end
+					onClick=function() remove() end
 				}
 			}
 		}
 		return
 	end
-	while next(data.maps) do table.remove(data.maps) end
-	Debug.toast("A map has been removed")
+	remove()
 end
 local addTextField
 local selectedMap
+local function openPresetUI(mode)
+	if isstring(mode) then mode=mode:lower() end
+	local stage
+	GUI.getRoot():addCanvas {
+		onInit=function(self)
+			setXY(self,-p2,-p3)
+			addWH(self,p2+p4,p3+p5)
+		end,
+		onUpdate=function() end,
+		onClick=function(self) self:delete() end,
+		onDraw=function(self,x,y,w,h)
+			local setAlpha,setColor=saveDrawing()
+			setAlpha(0.5) setColor(0,0,0)
+			Drawing.drawRect(x,y,w,h)
+			setAlpha(1) setColor(255,255,255)
+		end
+	}
+	:addCanvas {
+		onInit=function(self)
+			self:setTouchThrough(true)
+			setXY(self,p2,p3)
+			addWH(self,-p2-p4,-p3-p5)
+			stage=self:addCanvas {}
+		end
+	}
+	setWH(stage,math.min(200,getW(stage)),math.min(234,getH(stage)))
+	
+	setXY(stage,(getCW(stage:getParent())/2)-(getW(stage)/2),(getCH(stage:getParent())/2)-(getCH(stage)/2))
+	
+	stage:addCanvas {
+		h=34,
+		onInit=function(self)
+			self:addIcon {
+				w=30,
+				icon=mode=="save" and Icon.SAVE or mode=="load" and Icon.LOAD or 0,
+			}
+			self:addLabel {
+				x=30,w=-30,
+				text=mode=="save" and "Save preset" or mode=="load" and "Load preset" or nil,
+				onInit=function(self) self:setFont(Font.BIG) self:setColor(255,255,255) end,
+			}
+			addCloseButton(self,{
+				id="cmdClose",w=30,x=-30,
+				onClick=function()
+					stage:getParent():getParent():delete()
+				end
+			})
+		end
+	}
+	stage:addCanvas {
+		y=34,
+		onInit=function(self)
+			self:setPadding(2,2,2,2)
+			local maps,presets=data.maps,data.presets
+			for i=1,16 do
+				local function r(self)
+					self:setEnabled(mode=="save" and #maps>=1 or istable(presets[i]))
+				end
+				addButton(self,{
+					text=i,
+					onInit=function(self)
+						local p=self:getParent()
+						setWH(self,getCW(p)/4,getCH(p)/4)
+						setX(self,(getCW(p)/4)*((i-1)%4))
+						setY(self,(getCH(p)/4)*math.floor((i-1)/4))
+						addXY(self,1,1) addWH(self,-2,-2)
+						r(self)
+					end,
+					onUpdate=function(...) r(...) end,
+					isPressed=function() return istable(presets[i]) end,
+					onClick=function(self)
+						if mode=="save" then
+							local function save()
+								stage:getParent():getParent():delete()
+								if #maps<1 then
+									presets[i]=false
+								else
+									local preset={}
+									for _,v in pairs(maps) do
+										v=copyTable(v)
+										v.valid=nil
+										table.insert(preset,v)
+									end
+									presets[i]=preset
+								end
+							end
+							if istable(presets[i]) then
+								local title=" preset "..i.."?"
+								local okIcon,okText
+								local cancelText=TheoTown.translate("control_cancel")
+								if #maps<1 then title="Remove"..title else title="Override"..title end
+								if #maps<1 then okIcon=Icon.REMOVE else okIcon=Icon.SAVE end
+								if #maps<1 then okText=TheoTown.translate("toolremove_default_title") else okText="Override" end
+								local tw=function(...) return Drawing.getTextSize(...) end
+								GUI.createDialog {
+									pause=false,
+									title=title,
+									w=math.max(tw(title,Font.BIG)+35,tw(cancelText)+tw(okText)+88),
+									h=64,
+									actions={
+										{icon=Icon.CANCEL,text=cancelText},
+										{icon=okIcon,text=okText,onClick=save},
+									}
+								}
+							else save() end
+						end
+						if mode=="load" then
+							local function load()
+								stage:getParent():getParent():delete()
+								local preset=presets[i]
+								for k,v in pairs(maps) do
+									if istable(v) then v.valid=nil end
+									maps[k]=nil
+								end
+								for _,v in pairs(preset) do
+									v=copyTable(v)
+									v.valid=true
+									table.insert(maps,v)
+								end
+								updateMaps()
+							end
+							local title="Load preset "..i.."?"
+							local okIcon,okText=Icon.LOAD,TheoTown.translate("control_load")
+							local cancelText=TheoTown.translate("control_cancel")
+							local tw=function(...) return Drawing.getTextSize(...) end
+							GUI.createDialog {
+								pause=false,
+								title=title,
+								w=math.max(tw(title,Font.BIG)+35,tw(cancelText)+tw(okText)+88),
+								h=64,
+								actions={
+									{icon=Icon.CANCEL,text=cancelText},
+									{icon=okIcon,text=okText,onClick=load},
+								}
+							}
+						end
+					end
+				})
+			end
+		end,
+		onDraw=function(self,x,y,w,h)
+			local p2,p3,p4,p5=self:getPadding()
+			x,y,w,h=x-p2,y-p3,w+p2+p4,h+p3+p5
+			local setAlpha,setColor=saveDrawing()
+			setColor(getUIColor())
+			Drawing.drawRect(x,y,w,h)
+			setAlpha(0.5)
+			setColor(getUIColor(1,true))
+			drawOutline(x,y,w,h)
+			setColor(255,255,255) setAlpha(1)
+		end
+	}
+end
 local function openMenu(p,v)
 	do local e=GUI.get("mapMenu") if type(e)=="table" then e:delete() end end
-	local del
 	pdata.size=v[3]
 	selectedMap=p
 	return GUI.getRoot():addCanvas {
@@ -469,7 +689,10 @@ local function openMenu(p,v)
 							addButton(self,{
 								h=20,icon=Icon.REMOVE,
 								text=TheoTown.translate("toolremove_default_title"),
-								onClick=function() for i,vv in pairs(data.maps) do if vv==v then table.remove(data.maps,i) del=true break end end end
+								onClick=function()
+									v.valid=nil
+									updateMaps()
+								end
 							})
 						end
 					}
@@ -478,7 +701,7 @@ local function openMenu(p,v)
 				onUpdate=function(self) r(self) end
 			}
 		end,
-		onUpdate=function(self) if del then selectedMap=nil self:delete() end end,
+		onUpdate=function(self) if not v.valid then selectedMap=nil self:delete() end end,
 		onClick=function(self) selectedMap=nil self:delete() end,
 	}:setTouchThrough(true)
 end
@@ -513,7 +736,7 @@ local function openStage(onu,onc)
 	stage:addCanvas {
 		h=34,
 		onInit=function(self)
-			addCloseButton(self:getLastPart(),{
+			addCloseButton(self,{
 				id="cmdClose",w=30,x=-30,
 				onClick=function()
 					stage:getParent():getParent():delete()
@@ -530,31 +753,8 @@ local function openStage(onu,onc)
 			self:addCanvas {
 				h=-44,
 				onInit=function(self)
-					local xxx=0.5
-					local sb=self:addCanvas {
-						onUpdate=function(self)
-							local p=self:getParent()
-							setW(self,10)
-							if self:getTouchPoint() then
-								local sx=select(5,self:getTouchPoint())
-								xxx=xxx+(sx/(getW(p)-getW(self)))
-							end
-							xxx=math.max(0,math.min(xxx,1))
-							setX(self,(getW(p)-getW(self))*xxx)
-						end,
-						onDraw=function(self,x,y,w,h)
-							local setAlpha,setColor=saveDrawing()
-							setColor(getUIColor()) setAlpha(0.7)
-							Drawing.drawRect(x+1,y+1,w-2,h-2)
-							setColor(getUIColor(1,true))
-							drawOutline(x,y,w,h)
-							--Drawing.drawRect(x+(w/2)-0.5,y,1,h)
-							local s=math.min(w/3,h/3)
-							local yy=y+(h/2)-((s*7)/2)
-							for i=0,2 do Drawing.drawRect(x+(w/2)-(s/2),yy+(s*3*i),s,s) end
-							setColor(255,255,255) setAlpha(1)
-						end
-					}
+					local slw=10
+					data.slx=tonumber(data.slx) or 0.5
 					self:addCanvas {
 						onInit=function(self)
 							self:addCanvas {
@@ -579,10 +779,25 @@ local function openStage(onu,onc)
 										w=0,
 										icon=Icon.REMOVE,
 										text="Remove all",
+										onInit=function(self) self:setEnabled(#data.maps>=1) end,
+										onUpdate=function(self) self:setEnabled(#data.maps>=1) end,
 										onClick=function() removeAllMaps() end,
+									})
+									addButton(self,{
+										w=0,
+										icon=Icon.SAVE,
+										text="Save preset",
+										onClick=function() openPresetUI("save") end,
+									})
+									addButton(self,{
+										w=0,
+										icon=Icon.LOAD,
+										text="Load preset",
+										onClick=function() openPresetUI("load") end,
 									})
 								end
 							}
+							local pdx,pdy,pdi=function() return 20 end,function() return 10 end,function() return 1 end
 							self:addCanvas {y=31,onUpdate=function(self) local p=self:getParent() setWH(self,getW(p),getH(p)-31) end}
 							:addCanvas {
 								onUpdate=function(self)
@@ -591,11 +806,14 @@ local function openStage(onu,onc)
 									setXY(self,(getW(self:getParent())/2)-(getW(self)/2),(getH(self:getParent())/2)-(getH(self)/2))
 								end,
 								onInit=function(self)
+									pdi=function() return math.min(1,getH(self)/getCH(self:getParent())) end
+									pdx=function() return 20*pdi() end
+									pdy=function() return 12*pdi() end
 									local pmaps2
 									self:addCanvas {
 										onUpdate=function(self)
-											setWH(self,getW(self:getParent())-21,getH(self:getParent())-12)
-											setXY(self,20,11)
+											setWH(self,getW(self:getParent())-pdx(),getH(self:getParent())-pdy())
+											setXY(self,pdx(),0)
 											if pmaps2~=data.maps2 then
 												pmaps2=data.maps2
 												for _,v in pairs(getObjects(self)) do v:delete() end
@@ -604,6 +822,7 @@ local function openStage(onu,onc)
 													local a=true
 													self:addCanvas {
 														onUpdate=function(self)
+															if not v.valid then self:delete() return end
 															local pw,ph=getWH(self:getParent())
 															local size=tonumber(data.size) or 0
 															setWH(self,((pw/size)*v[3])+0.5,((ph/size)*v[3])+0.5)
@@ -628,9 +847,11 @@ local function openStage(onu,onc)
 															--if ii==1 then fxx,fyy=self:getXY() end
 														end,
 														onDraw=function(self,x,y,w,h)
+															if not v.valid then self:delete() return end
 															local setAlpha,setColor,setScale=saveDrawing()
 															setColor(getUIColor(1,true))
-															Drawing.drawRect(x+0.5,y+0.5,w-1,h-1)
+															local pdi=pdi()
+															Drawing.drawRect(x+(pdi/2),y+(pdi/2),w-pdi,h-pdi)
 															setAlpha(1) setColor(getUIColor(1,true,true))
 															if self:getTouchPoint() or self:isMouseOver() then
 																setAlpha(0.1)
@@ -640,10 +861,10 @@ local function openStage(onu,onc)
 															setAlpha(0.2)
 															pcall(function() if selectedMap==self then Drawing.drawRect(x,y,w,h) end end)
 															setAlpha(1)
-															drawOutline(x,y,w,h,0.5)
+															drawOutline(x,y,w,h,0.5*pdi)
 															local text=v[1].."_"..v[2]
 															local tw,th=Drawing.getTextSize(text)
-															local s=math.min(1,(w-3)/tw,(h-3)/th)
+															local s=math.min(1,(w-3)/tw,(h-3)/th)*pdi
 															setScale(s,s)
 															local sx,sy=Drawing.getScale()
 															Drawing.drawText(text,x+(w-(tw*sx))/2,y+(h-(th*sy))/2)
@@ -659,7 +880,7 @@ local function openStage(onu,onc)
 											setColor(getUIColor(1,true))
 											setAlpha(0.5)
 											Drawing.setClipping(x,y,w-1,h-1)
-											drawOutline(x,y,w,h)
+											drawOutline(x,y,w,h,pdi())
 											Drawing.resetClipping()
 											setAlpha(0.3)
 											local size=tonumber(data.size) or 0
@@ -667,25 +888,25 @@ local function openStage(onu,onc)
 												do
 													local x2=x
 													local x=x2+((w/size)*i)
-													Drawing.drawRect(x,y,1,h)
+													Drawing.drawRect(x,y,pdi(),h)
 													local tw,th=Drawing.getTextSize(i,Font.SMALL)
-													local s=math.min(1,((w/size)-2)/tw)
+													local s=math.max(0,math.min(1,pdy()/th,((w/size)-2)/tw))
 													setScale(s,s)
 													local sx,sy=Drawing.getScale()
 													x=math.max(x2+2,math.min(x-(tw*sx)/2,x2+w-(tw*sx)-2))
-													Drawing.drawText(i,x,(y-th)+(th-(th*sy))/2,Font.SMALL)
+													Drawing.drawText(i,x,y+h,Font.SMALL)
 													setScale(1,1)
 												end
 												do
 													local y2=y
 													local y=y2+h-((h/size)*i)
-													Drawing.drawRect(x,y,w,1)
+													Drawing.drawRect(x,y,w,pdi())
 													local tw,th=Drawing.getTextSize(i,Font.SMALL)
-													local s=math.min(1,((h/size)-2)/th)
+													local s=math.max(0,math.min(1,pdx()/(tw-2),((h/size)-2)/th))
 													setScale(s,s)
 													local sx,sy=Drawing.getScale()
 													y=math.max(y2+th*sy,math.min(y+(th*sy)/2,y2+h))
-													Drawing.drawText(i,(x-tw-2)+(tw-(tw*sx))/2,y-(th*sy),Font.SMALL)
+													Drawing.drawText(i,(x-(tw*s)-1),y-(th*sy),Font.SMALL)
 													setScale(1,1)
 												end
 											end
@@ -698,24 +919,52 @@ local function openStage(onu,onc)
 									local setAlpha,setColor=saveDrawing()
 									setColor(getUIColor(1,true))
 									setAlpha(0.5)
-									drawOutline(x,y,w,h)
-									local ww=math.min(w,1)
-									local hh=math.min(h,1)
-									Drawing.drawRect(x+math.min(w-ww,20),y,ww,math.min(h,11))
-									Drawing.drawRect(x,y+math.min(h-hh,11),math.min(w,20),hh)
+									drawOutline(x,y,w,h,pdi())
+									local ww=math.min(w,pdi())
+									local h0=math.min(h,pdy())
+									local hh=math.min(h,pdi())
+									Drawing.drawRect(x+math.min(w-ww,pdx()),y+h-h0,ww,h0)
+									Drawing.drawRect(x,y+h-math.min(h-hh,pdy()),math.min(w,pdx()),hh)
 									setColor(255,255,255) setAlpha(1)
 								end
 							}
 						end,
-						onUpdate=function(self) setWH(self,sb:getX()-2,getH(self:getParent())) end
+						onUpdate=function(self)
+							local p=self:getParent()
+							setWH(self,getCW(p)*data.slx,getCH(p))
+						end
 					}:setTouchThrough(true)-- map
-					local aa aa=self:addCanvas {
+					do local aa aa=self:addCanvas {
 						onInit=function(self)
+							self:setTouchThrough(true)
 							local yy,hh=0,0
 							self:addCanvas{w=1,h=1,onDraw=function() Drawing.setClipping(getAXYWH(self)) end}:setTouchThrough(true)
 							self:addCanvas {
 								onInit=function(self)
+									do
+										local addCanvas=self.addCanvas
+										function self:addCanvas(tbl,...)
+											local tbl2=copyTable(tbl)
+											tbl2.onInit=function(self,...)
+												local er0,er1,arg=true
+												if isfunction(tbl.onInit) then er0,er1=pcall(function(...) arg={tbl.onInit(self,...)} end,...) end 
+												assert(er0,er1)
+												if istable(arg) then return table.unpack(arg) end
+											end
+											return addCanvas(self,tbl2,...)
+										end
+									end
 									setX(self,2) setW(self,getW(self)-4)
+									local function addLabel(self,tbl)
+										local tbl2=copyTable(tbl)
+										local r=function(k,self,...)
+											self:setColor(getUIColor(1,true))
+											if isfunction(tbl[k]) then return tbl[k](self,...) end
+										end
+										tbl2.onInit=function(...) return r("onInit",...) end
+										tbl2.onUpdate=function(...) return r("onUpdate",...) end
+										return self:addLabel(tbl2)
+									end
 									local function addLayout(tbl)
 										local tbl2=copyTable(tbl)
 										local r=function(self,...)
@@ -743,7 +992,7 @@ local function openStage(onu,onc)
 										h=30,
 										onInit=function(self)
 											local seed local function setRandomSeed() seed:setText(math.random(0,99999999999)) end
-											self:addLabel {text=Translation.createcity_mapsize,w=70,onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end}
+											addLabel(self,{text=Translation.createcity_mapsize,w=70,onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end})
 											addTextField(self, {
 												w=-71,
 												text=data.size,
@@ -771,7 +1020,7 @@ local function openStage(onu,onc)
 										h=30,
 										onInit=function(self)
 											local seed local function setRandomSeed() seed:setText(math.random(0,99999999999)) end
-											self:addLabel {text=Translation.createcity_seed,w=70,onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end}
+											addLabel(self,{text=Translation.createcity_seed,w=70,onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end})
 											seed=addTextField(self,{
 												w=-102,
 												text=data.seed,
@@ -820,9 +1069,11 @@ local function openStage(onu,onc)
 														Drawing.drawRect(x,y,w,h)
 														setColor(255,255,255) setAlpha(1)
 													end
+												end,
+												onInit=function(self)
+													addLabel(self,{text="Heightmap: [i]",onUpdate=function(self) setXYWH(self,0,0,getWH(self:getParent())) end})
 												end
 											}
-											:addLabel {text="Heightmap: [i]",onUpdate=function(self) setXYWH(self,0,0,getWH(self:getParent())) end}
 											addTextField(self,{
 												w=-102,
 												text=data.bmp,
@@ -838,7 +1089,7 @@ local function openStage(onu,onc)
 									addLayout {
 										h=30,
 										onInit=function(self)
-											self:addLabel {text=Translation.createregion_regionname,w=70,onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end}
+											addLabel(self,{text=Translation.createregion_regionname,w=70,onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end})
 											addTextField(self,{
 												w=-102,
 												text=data.name,
@@ -926,8 +1177,9 @@ local function openStage(onu,onc)
 							self:addCanvas{w=1,h=1,onDraw=function() Drawing.resetClipping() end}:setTouchThrough(true)
 						end,
 						onUpdate=function(self)
-							setX(self,sb:getX()+getW(sb))
-							setWH(self,getW(self:getParent())-self:getX(),getH(self:getParent()))
+							local p=self:getParent()
+							setWH(self,getCW(p)*(1-data.slx),getCH(p))
+							setX(self,getCW(p)-getW(self))
 						end,
 						onDraw=function(self,x,y,w,h)
 							local setAlpha,setColor=saveDrawing()
@@ -937,8 +1189,48 @@ local function openStage(onu,onc)
 							--drawOutline(x,y,w,h)
 							setColor(255,255,255) setAlpha(1)
 						end
+					} end
+					self:addCanvas {
+						w=slw,
+						onUpdate=function(self)
+							slw=getW(self)
+							local p=self:getParent()
+							setX(self,(getCW(p)-getW(self))*data.slx)
+						end,
+						onInit=function(self)
+							data.sly=tonumber(data.sly) or 0.5
+							self:setTouchThrough(true)
+							self:addCanvas {
+								h=0,
+								onUpdate=function(self)
+									local p=self:getParent()
+									setWH(self,getCW(p),getCH(p)/3)
+									if self:getTouchPoint() then
+										local _,y,_,_,sx,sy=self:getTouchPoint()
+										data.slx=data.slx+(sx/(getCW(p:getParent())-getW(p)))
+										data.sly=(y-getCAY(p)-(getH(self)/2))/(getCH(p)-getH(self))
+									end
+									data.slx=math.max(0,math.min(data.slx,1))
+									data.sly=math.max(0,math.min(data.sly,1))
+									setY(self,(getCH(p)-getH(self))*data.sly)
+								end,
+								onDraw=function(self,x,y,w,h)
+									local function draw(x,y,w,h)
+										local setAlpha,setColor=saveDrawing()
+										setColor(getUIColor(1,true,true)) setAlpha(1)
+										local s=1
+										Drawing.drawRect(x,y,w,h)
+										setColor(getUIColor(1,true)) setAlpha(1)
+										drawOutline(x-s,y-s,w+s+s,h+s+s,s)
+										setColor(255,255,255) setAlpha(1)
+									end
+									local ww=w/3
+									draw(x,y,ww,h)
+									draw(x+w-ww,y,ww,h)
+								end
+							}
+						end,
 					}
-					aa:setTouchThrough(true)
 				end,
 			}
 			self:addCanvas {
@@ -991,7 +1283,7 @@ local function openStage(onu,onc)
 								tw=Drawing.getTextSize(json)
 							end
 							tw=tw+Drawing.getTextSize((" "):rep(10))
-							setColor(0,0,0)
+							setColor(getUIColor(1,true))
 							Drawing.drawText(json..(" "):rep(10)..json,x-(tw*xx),y+h/2,nil,0,0.5)
 							setColor(255,255,255)
 							Drawing.resetClipping()
@@ -1162,10 +1454,14 @@ local tt=Runtime.getTime()
 function script:overlay()
 	pcall(function() p2,p3,p4,p5=GUI.getRoot():getPadding() end)
 	local pv
+	data.size=math.max(1,tonumber(data.size) or 0)
 	local size=tonumber(data.size) or 0
 	local s,ss=2,{1}
 	while s<size do ss[#ss+1]=s s=s+2 end
-	for _,v in pairs(data.maps) do
+	for k,v in pairs(data.maps) do
+		v[1]=tonumber(v[1]) or 0
+		v[2]=tonumber(v[2]) or 0
+		v[3]=tonumber(v[3]) or 1
 		for i,vv in pairs(ss) do
 			v[3]=math.max(1,math.min(size,v[3]))
 			local e=ss[i+1] or size
@@ -1175,7 +1471,10 @@ function script:overlay()
 		v[1]=math.max(0,math.min(size-v[3],v[1]))
 		v[2]=math.max(0,math.min(size-v[3],v[2]))
 	end
+	
 	local maps2={}
 	data.maps2=""
-	for _,v in pairs(data.maps) do data.maps2=data.maps2..tostring(v) end
+	for i,v in pairs(data.maps) do
+		data.maps2=data.maps2..tostring(v)
+	end
 end
