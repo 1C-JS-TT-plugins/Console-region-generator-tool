@@ -180,9 +180,14 @@ function script:lateInit()
 	end)()
 	data.maps=false and istable(data.maps) and data.maps or {}
 	data.size=tonumber(data.size) or 8
+	pdata.size=math.max(1,data.size/4)
 	data.name=isstring(data.name) and data.name or ""
 	data.seed=isstring(data.seed) and data.seed or ""
 	data.bmp=isstring(data.bmp) and data.bmp or ""
+	data.maps2=""
+	data.json=nil
+	data.slx=0.5
+	data.sly=0.5
 	for i=1,16 do
 		local v=data.presets[i]
 		data.presets[i],data.presets[tostring(i)]=istable(v) and v
@@ -197,6 +202,7 @@ end
 local function addButton(self,tbl)
 	local icon=tbl.icon
 	local text=tbl.text
+	local font=tbl.font or Font.DEFAULT
 	local isPressed=function(...)
 		if isfunction(tbl.isPressed) then return tbl.isPressed(...) end
 	end
@@ -205,6 +211,7 @@ local function addButton(self,tbl)
 		getText=function(self) return tostring(text or text==nil and "") end,
 		setIcon=function(self,v) icon=v end,
 		setText=function(self,v) text=v end,
+		setFont=function(self,v) font=v end,
 		click=function(self,...)
 			if not self:isEnabled() then return end
 			if isfunction(playClickSound) then playClickSound() end
@@ -230,7 +237,7 @@ local function addButton(self,tbl)
 		local icon=lf.getIcon()
 		local iw,ih=Drawing.getImageSize(icon)
 		local text=lf.getText()
-		local tw,th=Drawing.getTextSize(text)
+		local tw,th=Drawing.getTextSize(text,font)
 		local s0=math.min(1,w/iw,h/ih)
 		local sx1,sy1=math.min(1,w/tw),math.min(1,h/th)
 		iw,ih=iw*s0,ih*s0
@@ -249,7 +256,7 @@ local function addButton(self,tbl)
 		setColor(getUIColor(1,true)) setScale(sx1,sy1)
 		setAlpha((a or self:getTouchPoint() or self:isMouseOver() or icon<1) and 1 or 0)
 		if not self:isEnabled() then Drawing.setAlpha(Drawing.getAlpha()*0.3) end
-		Drawing.drawText(text,tx,y+(h-th)/2)
+		Drawing.drawText(text,tx,y+(h-th)/2,font)
 		setColor(255,255,255) setAlpha(1) setScale(1,1)
 		if isfunction(tbl.onDraw) then return tbl.onDraw(self,x,y,w,h,...) end
 	end
@@ -274,8 +281,8 @@ local function getMap(x,y,i)
 		while next(data.maps,ii) do
 			local _,v=next(data.maps,ii)
 			if type(v)=="table" then
-				if x>=v[1] and x<v[1]+v[3] and
-				y>=v[2] and y<v[2]+v[3] then i2=i2+1 if i2>=1 then v2=v break end end
+				if x>=v.x and x<v.x+v.size and
+				y>=v.y and y<v.y+v.size then i2=i2+1 if i2>=1 then v2=v break end end
 			end
 			ii=(tonumber(ii) or 0)+1
 		end
@@ -285,17 +292,17 @@ local function getMap(x,y,i)
 end
 local function newMap()
 	local pv
-	local v2={valid=true,ord=#data.maps+1,0,0,pdata.size}
+	local v2={valid=true,ord=#data.maps+1,x=0,y=0,size=pdata.size}
 	local tl={}
-	for y=data.size-1,0,-1 do for x=0,data.size-1 do if not getMap(x,y) then v2[1],v2[2]=x,y break end end end
-	if v2[1] and v2[2] then table.insert(data.maps,v2) end
+	for y=data.size-1,0,-1 do for x=0,data.size-1 do if not getMap(x,y) then v2.x,v2.y=x,y break end end end
+	if v2.x and v2.y then table.insert(data.maps,v2) end
 	return v2
 end
 local function countMaps(x,y)
 	local i=0
 	for _,v in pairs(data.maps) do
-		if x>=v[1] and x<v[1]+v[3] and
-		y>=v[2] and y<v[2]+v[3] then i=i+0 end
+		if x>=v.x and x<v.x+v.size and
+		y>=v.y and y<v.y+v.size then i=i+0 end
 	end
 end
 local function getJson()
@@ -312,9 +319,13 @@ local function getJson()
 	json=json..'"maps":[\n\t\t'
 	local maps0={}
 	for _,v in pairs(data.maps) do table.insert(maps0,v) end
-	table.sort(maps0,function(a,b) return (a[1]+1)*(a[2]+1)<(b[1]+1)*(b[2]+1) end)
+	table.sort(maps0,function(a,b) return (a.x+1)*(a.y+1)<(b.x+1)*(b.y+1) end)
 	local maps2={}
-	for _,v in pairs(maps0) do table.insert(maps2,table.concat(v,",")) end
+	for _,v in pairs(maps0) do
+		table.insert(maps2,v.x)
+		table.insert(maps2,v.y)
+		table.insert(maps2,v.size)
+	end
 	json=json..table.concat(maps2,",\n\t\t")
 	json=json.."\n\t]"
 	local data0={}
@@ -640,17 +651,17 @@ local function openMenu(p,v)
 								onInit=function(self) sl=self end,
 								onUpdate=function(self) sl=self end,
 								maxValue=tonumber(data.size) and (tonumber(data.size) or 0)+0.5 or 0,
-								getValue=function() return v[3]*((size()+0.5)/size()) end,
-								getText=function() return v[3] end,
+								getValue=function() return v.size*((size()+0.5)/size()) end,
+								getText=function() return v.size end,
 								setValue=function(vv)
-									v[3]=math.floor(vv)
+									v.size=math.floor(vv)
 									for i,vvv in pairs(ss) do
-										v[3]=math.min(v[3],size())
+										v.size=math.min(v.size,size())
 										local e=ss[i+1] or size()
-										if v[3]>=vvv and v[3]<(e-((e-vvv)/2)) then v[3]=vvv end
-										if v[3]<e and v[3]>=(e-((e-vvv)/2)) then v[3]=vvv end
+										if v.size>=vvv and v.size<(e-((e-vvv)/2)) then v.size=vvv end
+										if v.size<e and v.size>=(e-((e-vvv)/2)) then v.size=vvv end
 									end
-									pdata.size=v[3]
+									pdata.size=v.size
 								end,
 							}
 						end
@@ -671,17 +682,17 @@ local function openMenu(p,v)
 								h=20,icon=Icon.REGION_SPLIT,
 								text=Translation.createregion_split,
 								onClick=function()
-									local os=v[3]
-									v[3]=os/2
+									local os=v.size
+									v.size=os/2
 									Runtime.postpone(function()
 										local s=0
-										while s<os do s=s+v[3] end
-										local ss=v[3]/os
-										for x=0,os-v[3],v[3] do for y=0,os-v[3],v[3] do if x~=0 or y~=0 then
+										while s<os do s=s+v.size end
+										local ss=v.size/os
+										for x=0,os-v.size,v.size do for y=0,os-v.size,v.size do if x~=0 or y~=0 then
 											local np=newMap()
-											np[3]=v[3]
-											np[1]=v[1]+x
-											np[2]=v[2]+y
+											np.size=v.size
+											np.x=v.x+x
+											np.y=v.y+y
 										end end end
 									end)
 								end
@@ -710,6 +721,7 @@ local function openStage(onu,onc)
 	local onc=function() if isfunction(onc) then return onc() end end
 	local stage
 	GUI.getRoot():addCanvas {
+		id="crgt",
 		onInit=function(self)
 			setXY(self,-p2,-p3)
 			addWH(self,p2+p4,p3+p5)
@@ -825,7 +837,7 @@ local function openStage(onu,onc)
 															if not v.valid then self:delete() return end
 															local pw,ph=getWH(self:getParent())
 															local size=tonumber(data.size) or 0
-															setWH(self,((pw/size)*v[3])+0.5,((ph/size)*v[3])+0.5)
+															setWH(self,((pw/size)*v.size)+0.5,((ph/size)*v.size)+0.5)
 															if self:getTouchPoint() then
 																self:setChildIndex(self:getParent():countChildren())
 																ii=ii+1
@@ -840,10 +852,10 @@ local function openStage(onu,onc)
 															if ii>0 then
 																local xxx=self:getX()/(pw-((pw/size)))
 																local yyy=self:getY()/(ph-((ph/size)))
-																v[1]=math.floor(((size-1)*xxx)+0.5)
-																v[2]=math.floor(((size-1)*(1-yyy))+0.5)-(v[3]-1)
+																v.x=math.floor(((size-1)*xxx)+0.5)
+																v.y=math.floor(((size-1)*(1-yyy))+0.5)-(v.size-1)
 															end
-															if true then setXY(self,((pw/size)*(v[1]))+0.5,(ph-((ph/size)*(v[2]+v[3])))+0.5) end
+															if true then setXY(self,((pw/size)*(v.x))+0.5,(ph-((ph/size)*(v.y+v.size)))+0.5) end
 															--if ii==1 then fxx,fyy=self:getXY() end
 														end,
 														onDraw=function(self,x,y,w,h)
@@ -862,7 +874,7 @@ local function openStage(onu,onc)
 															pcall(function() if selectedMap==self then Drawing.drawRect(x,y,w,h) end end)
 															setAlpha(1)
 															drawOutline(x,y,w,h,0.5*pdi)
-															local text=v[1].."_"..v[2]
+															local text=v.x.."_"..v.y
 															local tw,th=Drawing.getTextSize(text)
 															local s=math.min(1,(w-3)/tw,(h-3)/th)*pdi
 															setScale(s,s)
@@ -993,27 +1005,72 @@ local function openStage(onu,onc)
 										onInit=function(self)
 											local seed local function setRandomSeed() seed:setText(math.random(0,99999999999)) end
 											addLabel(self,{text=Translation.createcity_mapsize,w=70,onUpdate=function(self) setW(self,math.min(getW(self:getParent()),70)) end})
-											addTextField(self, {
+											self:addCanvas {
 												w=-71,
-												text=data.size,
-												onUpdate=function(self)
-													setW(self,getW(self:getParent())-71)
-													local text=self:getText()
-													if text~=text:trim() then self:setText(text:trim()) end
-													text=self:getText()
-													while text:startsWith("..") or text:startsWith("-") do
-														self:setText(text:reverse():sub(1,-2):reverse())
-														text=self:getText()
-													end
-													while text:endsWith("..") do
-														self:setText(text:reverse():sub(1,-2):reverse())
-														text=self:getText()
-													end
-													if (not tonumber(text)) and text:len()>=1 then self:setText(data.size) end
-													if (tonumber(text) or 0)>80 then self:setText(80) end
-													if data.size~=text then data.size=text end
+												onUpdate=function(self) setW(self,getW(self:getParent())-71) end,
+												onInit=function (self)
+													local te,btn1,btn2
+													btn1=addButton(self,{
+														w=30,
+														text="<",
+														font=Font.BIG,
+														onClick=function(self)
+															data.size=math.max(1,data.size-1)
+															te:setText(data.size)
+														end,
+														onUpdate=function(self) local p=self:getParent() setW(self,math.min(30,getW(p)/2)) end
+													})
+													self:addCanvas {
+														w=-31,x=31,
+														onUpdate=function(self)
+															setX(self,getW(btn1)+1)
+															setW(self,getW(self:getParent())-getW(btn1)-getW(btn2)-2)
+														end,
+														onInit=function(self)
+															self:setTouchThrough(true)
+															local sa=true
+															te=addTextField(self, {
+																text=data.size,
+																onInit=function(self) if not pcall(function() self:setAlignment(0.5,0.5) end) then sa=nil end end,
+																onUpdate=function(self)
+																	local text=self:getText()
+																	if text~=text:trim() then self:setText(text:trim()) end
+																	text=self:getText()
+																	while text:startsWith("..") or text:startsWith("-") do
+																		self:setText(text:reverse():sub(1,-2):reverse())
+																		text=self:getText()
+																	end
+																	while text:endsWith("..") do
+																		self:setText(text:reverse():sub(1,-2):reverse())
+																		text=self:getText()
+																	end
+																	if (not tonumber(text)) and text:len()>=1 then self:setText(data.size) end
+																	if (tonumber(text) or 0)>80 then self:setText(80) end
+																	if data.size~=text then data.size=text end
+																	local p=self:getParent()
+																	if sa then
+																		setW(self,getW(p))
+																	else
+																		setW(self,math.min(getW(p),Drawing.getTextSize(self:getText())+4))
+																		setX(self,(getW(p)-getW(self))/2)
+																	end
+																end
+															})--size
+														end
+													}--size
+													btn2=addButton(self,{
+														w=30,x=-30,
+														text=">",
+														font=Font.BIG,
+														onClick=function(self)
+															data.size=math.min(80,data.size+1)
+															te:setText(data.size)
+														end,
+														onUpdate=function(self) local p=self:getParent() setW(self,math.min(30,getW(p)/2)) setX(self,getW(p)-getW(self)) end
+													})
+													
 												end
-											})--size
+											}
 										end
 									}-- size
 									addLayout {
@@ -1314,10 +1371,10 @@ local function openStage(onu,onc)
 					addButton(self,{
 						w=30,x=-30,
 						icon=Icon.COPY,
-						onInit=function(self) self:setEnabled(not not json) end,
-						onUpdate=function(self) self:setEnabled(not not json) end,
+						onInit=function(self) self:setEnabled(not not data.json) end,
+						onUpdate=function(self) self:setEnabled(not not data.json) end,
 						onClick=function()
-							Runtime.setClipboard(json)
+							Runtime.setClipboard(data.json)
 							Debug.toast("Json copied to clipboard, paste into command field to generate region.")
 						end
 					})
@@ -1345,6 +1402,7 @@ do
 		local texts={}
 		local ww=0
 		local ci=0
+		local ax,ay=0,0.5
 		local tf tf=self:addCanvas {
 			id=tbl.id,
 			x=tbl.x,y=tbl.y,
@@ -1418,7 +1476,7 @@ do
 				setColor(getUIColor(1,true))
 				local text=self:getText()
 				local tw,th=Drawing.getTextSize(text)
-				Drawing.drawText(text,x,y+(h/2)-(th/2))
+				Drawing.drawText(text,math.max(x,x+w*ax),y+h*ay,nil,ax,ay)
 				setColor(255,255,255)
 				Drawing.resetClipping()
 			end
@@ -1459,17 +1517,17 @@ function script:overlay()
 	local s,ss=2,{1}
 	while s<size do ss[#ss+1]=s s=s+2 end
 	for k,v in pairs(data.maps) do
-		v[1]=tonumber(v[1]) or 0
-		v[2]=tonumber(v[2]) or 0
-		v[3]=tonumber(v[3]) or 1
+		v.x=tonumber(v.x) or 0
+		v.y=tonumber(v.y) or 0
+		v.size=tonumber(v.size) or 1
 		for i,vv in pairs(ss) do
-			v[3]=math.max(1,math.min(size,v[3]))
+			v.size=math.max(1,math.min(size,v.size))
 			local e=ss[i+1] or size
-			if v[3]>=vv and v[3]<(e-((e-vv)/2)) then v[3]=vv end
-			if v[3]<e and v[3]>=(e-((e-vv)/2)) then v[3]=vv end
+			if v.size>=vv and v.size<(e-((e-vv)/2)) then v.size=vv end
+			if v.size<e and v.size>=(e-((e-vv)/2)) then v.size=vv end
 		end
-		v[1]=math.max(0,math.min(size-v[3],v[1]))
-		v[2]=math.max(0,math.min(size-v[3],v[2]))
+		v.x=math.max(0,math.min(size-v.size,v.x))
+		v.y=math.max(0,math.min(size-v.size,v.y))
 	end
 	
 	local maps2={}
