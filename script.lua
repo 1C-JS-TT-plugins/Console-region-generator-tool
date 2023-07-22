@@ -296,20 +296,17 @@ local function getJson()
 	"seed":"]]..data.seed..[[",
 	"size":]]..(tonumber(data.size) or 0)..[[,
 	]]
-	if tostring(data.bmp):trim():endsWith(".png")
-	or tostring(data.bmp):trim():endsWith(".jpg")
-	or tostring(data.bmp):trim():endsWith(".jpeg")
-	then json=json..'"bmp":"'..data.bmp..",\n\t" end
-	json=json..'"maps":['
-	local maps0={}
-	for _,v in pairs(data.maps) do table.insert(maps0,v) end
-	table.sort(maps0,function(a,b) return (a.x+1)*(a.y+1)<(b.x+1)*(b.y+1) end)
-	local maps2={}
-	for _,v in pairs(maps0) do table.insert(maps2,v.x..","..v.y..","..v.size) end
-	if #maps2>=1 then json=json.."\n\t\t" end
-	json=json..table.concat(maps2,",\n\t\t")
-	json=json.."]"
-	if #maps2>=1 then json=json.."\n\t" end
+	if #tostring(data.bmp):trim()>=1 then json=json..'"bmp":"'..data.bmp..'",\n\t' end
+	json=json..'"maps":['..(function()
+		local s,maps0="",{}
+		for _,v in pairs(data.maps) do table.insert(maps0,v) end
+		if #maps0<1 then return "" end
+		table.sort(maps0,function(a,b) return (a.x+1)*(a.y+1)<(b.x+1)*(b.y+1) end)
+		local maps2={}
+		for _,v in pairs(maps0) do table.insert(maps2,v.x..","..v.y..","..v.size) end
+		s=s..table.concat(maps2,",\n\t\t")
+		return "\n\t\t"..s.."\n\t"
+	end)().."]"
 	local data0={}
 	for _,v in pairs{{"trees"},{"decos","decoration"},{"desert"},{"snow"},{"terrain"}} do data0[v[1] and v[2] or v[1]]=TheoTown.SETTINGS[v[1]] end
 	if next(data0) then json=json..",\n\t"..Runtime.toJson(data0):gsub("{",""):gsub("}",""):gsub(",",",\n\t") end
