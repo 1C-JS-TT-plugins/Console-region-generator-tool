@@ -1,14 +1,16 @@
-# Console region generator tool v3.3.1
-How to use (click the image below, and don't forget to subscribe to the channel):
-[![TheoTown revamped region creation stage](https://i.ytimg.com/vi_webp/bEsFcV3eU2g/mqdefault.webp)](https://www.youtube.com/watch?v=eqtgTSUP5Qs)
+# Console region generator tool v4.0.2
 
-- Add a new map
-- - Cick and hold a map to drag and move it anywhere
-- Click on a map to change size and to delete it
+**Please, before installation:**
+- Remove or move older versions out of the plugins folder
+to prevent id conflict errors
+- Starting from v4.0.2, rename the file extension to .zip
+as the game is unable to load unencrypted .plugin files
+
+**Usage:**
+- Press "+" to add a new map;
+- - Cick the map to change size or remove it;
+- - Hold and drag the map go move it anywhere
 - View and copy JSON code and use it to generate a region from the console
+- Import the region from the command field JSON
 
-~This plugin calls [TheoTown.execute("cr:{}")](https://doc.theotown.com/modules/TheoTown.html#execute) to generate a region (you can do so from the console stage), which causes lag (or even crashes on low-end devices) (unless the region is small enough for your hardware to handle), and for some every-lua-plugin-f***ing reason on some or all devices the region doesn't generate and instead displays a **'...///bit32' not found: ...///bit32Library was not found** error, so I have nothing to do about these issues, except for one, which the devs must fix now if they are reading this message.~
-
-Report bugs [here](https://github.com/AFP-TheoTown-plugins/Console-region-generator-tool/issues).
-
-You can also download from [here](https://forum.theotown.com/viewtopic.php?t=16224), or from the plugin store.
+~This plugin calls [TheoTown.execute("cr:{}")](https://doc.theotown.com/modules/TheoTown.html#execute) to generate a region (you can do so from the console stage), which causes lag (or even crashes on low-end devices) (unless the region is small enough for your hardware to handle), and for some every-lua-plugin-f\*\*\*ing reason the region doesn't generate and instead displays a **'...///bit32' not found: ...///bit32Library was not found** error, so I have nothing to do about these issues, except for the latter, which the devs must fix now if they are reading this message.~

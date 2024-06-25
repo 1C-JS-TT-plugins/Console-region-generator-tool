@@ -1,0 +1,12 @@
+[
+	{
+		"id":"$crgt_qr00",
+		"type":"animation",
+		"frames":[{"bmp":"qr.png"}]
+	},
+	{
+		"id":"$crgt00",
+		"type":"script",
+		"script":"crgt.lua"
+	}
+]
