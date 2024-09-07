@@ -1,5 +1,10 @@
 # Console region generator tool v4.0.2
 
+![](https://raw.githubusercontent.com/1C-JS-TT-plugins/Console-region-generator-tool/main/preview.png)
+(QR code takes you to a YouTube video showing a workaround for generating console regions with selected biomes)
+
+![](https://raw.githubusercontent.com/1C-JS-TT-plugins/Console-region-generator-tool/main/how%20to%20access.png)
+
 **Please, before installation:**
 - Remove or move older versions out of the plugins folder
 to prevent id conflict errors
